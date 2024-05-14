@@ -441,7 +441,7 @@ class ImageInstanceOps:
                     (s[0] + shift, s[1]),
                     (s[0] + shift + d[0], s[1] + d[1]),
                     constants.CLR_BLACK,
-                    3,
+                    2,
                 )
             else:
                 cv2.rectangle(
@@ -449,7 +449,7 @@ class ImageInstanceOps:
                     (s[0], s[1]),
                     (s[0] + d[0], s[1] + d[1]),
                     constants.CLR_BLACK,
-                    3,
+                    2,
                 )
             for field_block_bubbles in field_block.traverse_bubbles:
                 for pt in field_block_bubbles:
@@ -459,7 +459,7 @@ class ImageInstanceOps:
                         (int(x + box_w / 10), int(y + box_h / 10)),
                         (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
                         constants.CLR_GRAY,
-                        border,
+                        1,
                     )
                     if draw_qvals:
                         rect = [y, y + box_h, x, x + box_w]
