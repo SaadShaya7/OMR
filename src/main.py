@@ -1,10 +1,16 @@
 from pathlib import Path
+import sys
 from flask import Flask, request, jsonify
 import json
-import os
-from src.entry import entry_point
 import tempfile
 import logging
+
+# Adjust the path to your package root
+package_root = Path(__file__).resolve().parent.parent
+sys.path.append(str(package_root))
+
+from entry import entry_point
+
 
 app = Flask(__name__)
 
@@ -29,7 +35,6 @@ def process_image():
     temp_template_path = None
 
     try:
-        # Save the image to a temporary file
         temp_image_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
         temp_image_path = temp_image_file.name
         temp_image_file.write(image_file.read())
