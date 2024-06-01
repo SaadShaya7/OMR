@@ -69,7 +69,7 @@ class Template:
     def setup_pre_processors(self):
         # Define the path to the marker image in the constants directory
         marker_image_path = os.path.join(
-            os.path.dirname(__file__), "..", "constants", "marker_image.jpg"
+            os.path.dirname(__file__), "constants", "marker_image.jpg"
         )
 
         # Directly create an instance of CropOnMarkers with the hardcoded image path

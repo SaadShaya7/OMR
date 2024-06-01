@@ -1,10 +1,8 @@
 import argparse
 import json
 import os
-from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime
 
-import pandas as pd
 
 from src.logger import logger
 
@@ -69,26 +67,27 @@ def setup_outputs_for_template(paths, template):
     ns.files_obj = {}
     TIME_NOW_HRS = strftime("%I%p", localtime())
     ns.filesMap = {
-        "Results": os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv"),
-        "MultiMarked": os.path.join(paths.manual_dir, "MultiMarkedFiles.csv"),
-        "Errors": os.path.join(paths.manual_dir, "ErrorFiles.csv"),
+        "Results": os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.json"),
+        "MultiMarked": os.path.join(paths.manual_dir, "MultiMarkedFiles.json"),
+        "Errors": os.path.join(paths.manual_dir, "ErrorFiles.json"),
     }
 
     for file_key, file_name in ns.filesMap.items():
         if not os.path.exists(file_name):
             logger.info(f"Created new file: '{file_name}'")
-            # moved handling of files to pandas csv writer
-            ns.files_obj[file_key] = file_name
-            # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
-                ns.files_obj[file_key],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
-            )
+            ns.files_obj[file_key] = []
+
+            # Write the JSON file with an empty list
+            with open(file_name, "w") as f:
+                json.dump(ns.files_obj[file_key], f)
         else:
             logger.info(f"Present : appending to '{file_name}'")
-            ns.files_obj[file_key] = open(file_name, "a")
+            # Read existing JSON data
+            with open(file_name, "r") as f:
+                ns.files_obj[file_key] = json.load(f)
+
+    # Write the updated data back to the JSON file
+    with open(ns.filesMap["Results"], "w") as f:
+        json.dump(ns.files_obj["Results"], f)
 
     return ns

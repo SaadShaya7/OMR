@@ -10,7 +10,6 @@ from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_templa
 from src.utils.interaction import Stats
 from src.utils.parsing import get_concatenated_response
 
-# from csv import QUOTE_NONNUMERIC
 
 STATS = Stats()
 
@@ -70,13 +69,13 @@ def process_image(image_path, template_path):
     results_line = [file_id, str(image_path), str(save_dir), score] + list(
         omr_response.values()
     )
-    pd.DataFrame([results_line], dtype=str).to_csv(
-        outputs_namespace.files_obj["Results"],
-        mode="a",
-        # quoting=QUOTE_NONNUMERIC,
-        header=False,
-        index=False,
-    )
+    # pd.DataFrame([results_line], dtype=str).to_csv(
+    #     outputs_namespace.files_obj["Results"],
+    #     mode="a",
+    #     # quoting=QUOTE_NONNUMERIC,
+    #     header=False,
+    #     index=False,
+    # )
 
     logger.info(f"Processed image {file_id} with score {score}")
 
