@@ -1,99 +1,62 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
-import argparse
-import sys
 from pathlib import Path
-
+from flask import Flask, request, jsonify
+import json
+import os
 from src.entry import entry_point
-from src.logger import logger
+import tempfile
+import logging
+
+app = Flask(__name__)
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
 
 
-def parse_args():
-    # construct the argument parse and parse the arguments
-    argparser = argparse.ArgumentParser()
+@app.route("/processImage", methods=["POST"])
+def process_image():
+    if "image" not in request.files or "template" not in request.form:
+        return jsonify({"error": "Image and template are required"}), 400
 
-    argparser.add_argument(
-        "-i",
-        "--inputDir",
-        default=["inputs"],
-        # https://docs.python.org/3/library/argparse.html#nargs
-        nargs="*",
-        required=False,
-        type=str,
-        dest="input_paths",
-        help="Specify an input directory.",
-    )
+    image_file = request.files["image"]
+    template_str = request.form["template"]
 
-    argparser.add_argument(
-        "-d",
-        "--debug",
-        required=False,
-        dest="debug",
-        action="store_false",
-        help="Enables debugging mode for showing detailed errors",
-    )
+    try:
+        template = json.loads(template_str)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON template"}), 400
 
-    argparser.add_argument(
-        "-o",
-        "--outputDir",
-        default="outputs",
-        required=False,
-        dest="output_dir",
-        help="Specify an output directory.",
-    )
+    temp_image_path = None
+    temp_template_path = None
 
-    argparser.add_argument(
-        "-a",
-        "--autoAlign",
-        required=False,
-        dest="autoAlign",
-        action="store_true",
-        help="(experimental) Enables automatic template alignment - \
-        use if the scans show slight misalignments.",
-    )
+    try:
+        # Save the image to a temporary file
+        temp_image_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+        temp_image_path = temp_image_file.name
+        temp_image_file.write(image_file.read())
+        temp_image_file.close()
 
-    argparser.add_argument(
-        "-l",
-        "--setLayout",
-        required=False,
-        dest="setLayout",
-        action="store_true",
-        help="Set up OMR template layout - modify your json file and \
-        run again until the template is set.",
-    )
+        # Save the template to a temporary file
+        temp_template_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+        temp_template_path = temp_template_file.name
+        with open(temp_template_path, "w") as f:
+            json.dump(template, f)
 
-    (
-        args,
-        unknown,
-    ) = argparser.parse_known_args()
+        # Process the image using the template
+        entry_point(temp_image_path, temp_template_path)
 
-    args = vars(args)
+        return jsonify({"message": "Image processed successfully"}), 200
 
-    if len(unknown) > 0:
-        logger.warning(f"\nError: Unknown arguments: {unknown}", unknown)
-        argparser.print_help()
-        exit(11)
-    return args
+    except Exception as e:
+        logging.error("An error occurred: %s", e, exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
-
-def entry_point_for_args(args):
-    if args["debug"] is True:
-        # Disable tracebacks
-        sys.tracebacklimit = 0
-    for root in args["input_paths"]:
-        entry_point(
-            Path(root),
-            args,
-        )
+    # finally:
+    #     # Clean up temporary files
+    #     if temp_image_path and os.path.exists(temp_image_path):
+    #         os.remove(temp_image_path)
+    #     if temp_template_path and os.path.exists(temp_template_path):
+    #         os.remove(temp_template_path)
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    entry_point_for_args(args)
+    app.run(debug=True)
