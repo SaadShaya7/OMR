@@ -431,15 +431,20 @@ class ImageInstanceOps:
             img, template.page_dimensions[0], template.page_dimensions[1]
         )
         final_align = img.copy()
+        img_width = template.page_dimensions[0]
+
         for field_block in template.field_blocks:
             s, d = field_block.origin, field_block.dimensions
             box_w, box_h = field_block.bubble_dimensions
             shift = field_block.shift
+            # Adjust origin for right-to-left layout
+            s = (img_width - s[0] - d[0], s[1])
+
             if shifted:
                 cv2.rectangle(
                     final_align,
-                    (s[0] + shift, s[1]),
-                    (s[0] + shift + d[0], s[1] + d[1]),
+                    (s[0] - shift, s[1]),
+                    (s[0] - shift + d[0], s[1] + d[1]),
                     constants.CLR_BLACK,
                     2,
                 )
@@ -453,7 +458,12 @@ class ImageInstanceOps:
                 )
             for field_block_bubbles in field_block.traverse_bubbles:
                 for pt in field_block_bubbles:
-                    x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
+                    # Adjust point for right-to-left layout
+                    x, y = (
+                        (img_width - pt.x - box_w + field_block.shift, pt.y)
+                        if shifted
+                        else (img_width - pt.x - box_w, pt.y)
+                    )
                     cv2.rectangle(
                         final_align,
                         (int(x + box_w / 10), int(y + box_h / 10)),
@@ -472,19 +482,22 @@ class ImageInstanceOps:
                             constants.CLR_BLACK,
                             2,
                         )
+
             if shifted:
                 text_in_px = cv2.getTextSize(
                     field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
                 )
+                # Adjust text position for right-to-left layout
                 cv2.putText(
                     final_align,
                     field_block.name,
-                    (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
+                    (int(s[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     constants.TEXT_SIZE,
                     constants.CLR_BLACK,
                     4,
                 )
+
         return final_align
 
     def get_global_threshold(
