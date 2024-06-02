@@ -1,14 +1,14 @@
-# # Any directory starting with a dot
-# **/\.*/
-# # Except .github
-# !.github/
+# Any directory starting with a dot
+**/\.*/
+# Except .github
+!.github/
 
-# # Everything in inputs/ and outputs/
+# Everything in inputs/ and outputs/
 # inputs/*
 # outputs/*
 
-# # Misc
-# **/.DS_Store
-# **/__pycache__
-# venv/
-# OMRChecker.wiki/
+# Misc
+**/.DS_Store
+**/__pycache__
+venv/
+OMRChecker.wiki/
