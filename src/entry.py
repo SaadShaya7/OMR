@@ -1,9 +1,6 @@
-from asyncio import constants
 from pathlib import Path
 import cv2
-import pandas as pd
 from src.defaults import CONFIG_DEFAULTS
-from src.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.logger import logger
 from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
@@ -25,7 +22,6 @@ def process_image(image_path, template_path):
     template = Template(Path(template_path), tuning_config)
 
     # Process the image
-    curr_dir = Path("inputs")
     output_dir = Path("outputs")
     paths = Paths(output_dir)
     setup_dirs_for_paths(paths)
