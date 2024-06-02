@@ -1,0 +1,114 @@
+{
+  "pageDimensions": [
+    524,
+    772
+  ],
+  "bubbleDimensions": [
+    14,
+    14
+  ],
+  "customLabels": {},
+  "fieldBlocks": {
+    "StudentId": {
+      "fieldType": "QTYPE_INT",
+      "origin": [
+        6,
+        59
+      ],
+      "fieldLabels": [
+        "id1..4"
+      ],
+      "bubblesGap": 12,
+      "labelsGap": 17,
+      "bubbleDimensions": [
+        8,
+        8
+      ]
+    },
+    "form": {
+      "fieldType": "FORM",
+      "origin": [
+        94,
+        44
+      ],
+      "fieldLabels": [
+        "form"
+      ],
+      "bubblesGap": 14,
+      "labelsGap": 12,
+      "bubbleDimensions": [
+        8,
+        8
+      ]
+    },
+    "question1": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        404,
+        225
+      ],
+      "fieldLabels": [
+        "q1..12"
+      ],
+      "bubblesGap": 21,
+      "labelsGap": 18.7
+    },
+    "question2": {
+      "fieldType": "TRUEFALSE",
+      "origin": [
+        447,
+        490
+      ],
+      "fieldLabels": [
+        "q14..26"
+      ],
+      "bubblesGap": 21,
+      "labelsGap": 18.7
+    },
+    "question3": {
+      "fieldType": "QTYPE_MCQ3",
+      "origin": [
+        301,
+        225
+      ],
+      "fieldLabels": [
+        "q27..53"
+      ],
+      "bubblesGap": 21,
+      "labelsGap": 18.7
+    },
+    "question4": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        162,
+        230
+      ],
+      "fieldLabels": [
+        "q54..80"
+      ],
+      "bubblesGap": 21,
+      "labelsGap": 18.9
+    },
+    "teacher": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        6,
+        225
+      ],
+      "fieldLabels": [
+        "tq1..17"
+      ],
+      "bubblesGap": 21,
+      "labelsGap": 18.7
+    }
+  },
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "relativePath": "../marker.jpg",
+        "sheetToMarkerWidthRatio": 21
+      }
+    }
+  ]
+}
