@@ -41,7 +41,8 @@ class ImageInstanceOps:
         auto_align = config.alignment_params.auto_align
         try:
             img = image.copy()
-            # origDim = img.shape[:2]
+            # Reverse the image horizontally to change reading direction
+            img = cv2.flip(img, 1)
             img = ImageUtils.resize_util(
                 img, template.page_dimensions[0], template.page_dimensions[1]
             )

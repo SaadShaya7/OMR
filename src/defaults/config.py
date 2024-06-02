@@ -11,14 +11,14 @@ CONFIG_DEFAULTS = DotMap(
         "threshold_params": {
             "GAMMA_LOW": 0.7,
             "MIN_GAP": 30,
-            "MIN_JUMP": 25,
+            "MIN_JUMP": 0,
             "CONFIDENT_SURPLUS": 5,
             "JUMP_DELTA": 30,
             "PAGE_TYPE_FOR_THRESHOLD": "white",
         },
         "alignment_params": {
             # Note: 'auto_align' enables automatic template alignment, use if the scans show slight misalignments.
-            "auto_align": False,
+            "auto_align": True,
             "match_col": 5,
             "max_steps": 20,
             "stride": 1,
