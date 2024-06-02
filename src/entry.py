@@ -6,6 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
+
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -78,10 +79,10 @@ def process_dir(
     tuning_config=CONFIG_DEFAULTS,
     evaluation_config=None,
 ):
-    # Update local tuning_config (in current recursion stack)
-    local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
-    if os.path.exists(local_config_path):
-        tuning_config = open_config_with_defaults(local_config_path)
+    # # Update local tuning_config (in current recursion stack)
+    # local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
+    # if os.path.exists(local_config_path):
+    #     tuning_config = open_config_with_defaults(local_config_path)
 
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
@@ -140,15 +141,15 @@ def process_dir(
         setup_dirs_for_paths(paths)
         outputs_namespace = setup_outputs_for_template(paths, template)
 
-        print_config_summary(
-            curr_dir,
-            omr_files,
-            template,
-            tuning_config,
-            local_config_path,
-            evaluation_config,
-            args,
-        )
+        # print_config_summary(
+        #     curr_dir,
+        #     omr_files,
+        #     template,
+        #     tuning_config,
+        #     local_config_path,
+        #     evaluation_config,
+        #     args,
+        # )
         if args["setLayout"]:
             show_template_layouts(omr_files, template, tuning_config)
         else:
