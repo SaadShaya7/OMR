@@ -29,7 +29,7 @@ def process_image(image_path, template_path):
 
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     if in_omr is None:
-        raise Exception(f"Failed to load image at {image_path}")
+        raise Exception(f"Could not read the provided image")
 
     template.image_instance_ops.reset_all_save_img()
     template.image_instance_ops.append_save_img(1, in_omr)
@@ -38,28 +38,21 @@ def process_image(image_path, template_path):
     )
 
     if in_omr is None:
-        raise Exception(f"Image preprocessing failed for {image_path}")
+        raise Exception(f"Failure after applying processors")
 
     file_id = Path(image_path).name
     save_dir = outputs_namespace.paths.save_marked_dir
-    response_dict, final_marked, multi_marked, _ = (
-        template.image_instance_ops.read_omr_response(
-            template, image=in_omr, name=file_id, save_dir=save_dir
-        )
+    (
+        response_dict,
+        final_marked,
+        multi_marked,
+        _,
+    ) = template.image_instance_ops.read_omr_response(
+        template, image=in_omr, name=file_id, save_dir=save_dir
     )
 
     omr_response = get_concatenated_response(response_dict, template)
 
-    # local_evaluation_path = curr_dir.joinpath("evaluation")
-
-    # evaluation_config = EvaluationConfig(
-    #     curr_dir,
-    #     Path('evaluation'),
-    #     template,
-    #     tuning_config,
-    # )
-
-    # score = evaluate_concatenated_response(omr_response, evaluation_config)
     score = 0
 
     results_line = [file_id, str(image_path), str(save_dir), score] + list(

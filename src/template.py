@@ -11,7 +11,7 @@ import os
 from src.constants import FIELD_TYPES
 from src.core import ImageInstanceOps
 from src.logger import logger
-from src.processors.CropOnMarkers import CropOnMarkers
+from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.parsing import (
     custom_sort_output_columns,
     open_template_with_defaults,
@@ -73,10 +73,11 @@ class Template:
         )
 
         # Directly create an instance of CropOnMarkers with the hardcoded image path
-        pre_processor_instance = CropOnMarkers(
+        ProcessorClass = PROCESSOR_MANAGER.processors["CropOnMarkers"]
+        pre_processor_instance = ProcessorClass(
             options={
                 "relativePath": marker_image_path,
-                "sheetToMarkerWidthRatio": 17.6,
+                "sheetToMarkerWidthRatio": 21,
             },
             relative_dir=os.path.dirname(__file__),
             image_instance_ops=self.image_instance_ops,
