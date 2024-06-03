@@ -55,9 +55,9 @@ def process_image(image_path, template_path):
 
     score = 0
 
-    results_line = [file_id, str(image_path), str(save_dir), score] + list(
-        omr_response.values()
-    )
+    # results_line = [file_id, str(image_path), str(save_dir), score] + list(
+    #     omr_response.values()
+    # )
     # pd.DataFrame([results_line], dtype=str).to_csv(
     #     outputs_namespace.files_obj["Results"],
     #     mode="a",
