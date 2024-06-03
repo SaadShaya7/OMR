@@ -3,7 +3,6 @@ import cv2
 from defaults import CONFIG_DEFAULTS
 from logger import logger
 from template import Template
-from utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from utils.interaction import Stats
 from utils.parsing import get_concatenated_response
 
@@ -21,12 +20,6 @@ def process_image(image_path, template_path):
     # Load template
     template = Template(Path(template_path), tuning_config)
 
-    # Process the image
-    output_dir = Path("outputs")
-    paths = Paths(output_dir)
-    setup_dirs_for_paths(paths)
-    outputs_namespace = setup_outputs_for_template(paths, template)
-
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     if in_omr is None:
         raise Exception(f"Could not read the provided image")
@@ -41,30 +34,19 @@ def process_image(image_path, template_path):
         raise Exception(f"Failure after applying processors")
 
     file_id = Path(image_path).name
-    save_dir = outputs_namespace.paths.save_marked_dir
+    # save_dir = outputs_namespace.paths.save_marked_dir
     (
         response_dict,
         final_marked,
         multi_marked,
         _,
     ) = template.image_instance_ops.read_omr_response(
-        template, image=in_omr, name=file_id, save_dir=save_dir
+        template, image=in_omr, name=file_id
     )
 
     omr_response = get_concatenated_response(response_dict, template)
 
     score = 0
-
-    # results_line = [file_id, str(image_path), str(save_dir), score] + list(
-    #     omr_response.values()
-    # )
-    # pd.DataFrame([results_line], dtype=str).to_csv(
-    #     outputs_namespace.files_obj["Results"],
-    #     mode="a",
-    #     # quoting=QUOTE_NONNUMERIC,
-    #     header=False,
-    #     index=False,
-    # )
 
     logger.info(f"Processed image {file_id} with score {score}")
 
