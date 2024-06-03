@@ -55,7 +55,7 @@ class Template:
 
         non_custom_columns, all_custom_columns = (
             list(self.non_custom_labels),
-            list(custom_labels_object.keys()),
+            list(custom_labels_object.keys()),  #
         )
 
         if len(self.output_columns) == 0:
