@@ -1,11 +1,11 @@
 from pathlib import Path
 import cv2
-from src.defaults import CONFIG_DEFAULTS
-from src.logger import logger
-from src.template import Template
-from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
-from src.utils.interaction import Stats
-from src.utils.parsing import get_concatenated_response
+from defaults import CONFIG_DEFAULTS
+from logger import logger
+from template import Template
+from utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
+from utils.interaction import Stats
+from utils.parsing import get_concatenated_response
 
 
 STATS = Stats()
@@ -68,4 +68,4 @@ def process_image(image_path, template_path):
 
     logger.info(f"Processed image {file_id} with score {score}")
 
-    return {"file_id": file_id, "score": score, "omr_response": omr_response}
+    return final_marked

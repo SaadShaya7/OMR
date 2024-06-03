@@ -1,4 +1,4 @@
-from src.schemas.constants import (
+from schemas.constants import (
     ARRAY_OF_STRINGS,
     DEFAULT_SECTION_KEY,
     FIELD_STRING_TYPE,

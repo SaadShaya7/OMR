@@ -8,13 +8,13 @@ import cv2
 import pandas as pd
 from rich.table import Table
 
-from src.logger import console, logger
-from src.schemas.constants import (
+from logger import console, logger
+from schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
     MARKING_VERDICT_TYPES,
 )
-from src.utils.parsing import (
+from utils.parsing import (
     get_concatenated_response,
     open_evaluation_with_validation,
     parse_fields,
@@ -199,10 +199,9 @@ class EvaluationConfig:
         self.has_non_default_section = False
         self.exclude_files = []
 
-       
         self.questions_in_order = self.parse_questions_in_order(
-                options["questions_in_order"]
-            )
+            options["questions_in_order"]
+        )
         answers_in_order = options["answers_in_order"]
 
         self.validate_questions(answers_in_order)
@@ -227,16 +226,15 @@ class EvaluationConfig:
             answers_in_order
         )
         self.validate_answers(answers_in_order, tuning_config)
-        
+
         # Saving the data to JSON file
         json_data = {
             "questions_in_order": self.questions_in_order,
-            "answers_in_order": answers_in_order
+            "answers_in_order": answers_in_order,
             # Add more data if needed
         }
-        with open('evaluation_data.json', 'w') as json_file:
+        with open("evaluation_data.json", "w") as json_file:
             json.dump(json_data, json_file)
-
 
     def __str__(self):
         return str(self.path)

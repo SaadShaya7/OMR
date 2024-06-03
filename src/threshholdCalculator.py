@@ -3,7 +3,7 @@ from typing import Tuple, List
 import numpy as np
 
 from src import constants
-from src.defaults.config import CONFIG_DEFAULTS
+from defaults.config import CONFIG_DEFAULTS
 
 
 class ThresholdCalculator:

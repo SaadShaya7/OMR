@@ -3,8 +3,8 @@ from dataclasses import dataclass
 import cv2
 from screeninfo import get_monitors
 
-from src.logger import logger
-from src.utils.image import ImageUtils
+from logger import logger
+from utils.image import ImageUtils
 
 monitor_window = get_monitors()[0]
 

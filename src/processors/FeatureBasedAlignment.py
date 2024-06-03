@@ -2,12 +2,13 @@
 Image based feature alignment
 Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
 """
+
 import cv2
 import numpy as np
 
-from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
-from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
+from processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from utils.image import ImageUtils
+from utils.interaction import InteractionUtils
 
 
 class FeatureBasedAlignment(ImagePreprocessor):

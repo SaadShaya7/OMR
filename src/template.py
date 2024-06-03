@@ -8,11 +8,11 @@
 """
 
 import os
-from src.constants import FIELD_TYPES
-from src.core import ImageInstanceOps
-from src.logger import logger
-from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.parsing import (
+from constants import FIELD_TYPES
+from core import ImageInstanceOps
+from logger import logger
+from processors.manager import PROCESSOR_MANAGER
+from utils.parsing import (
     custom_sort_output_columns,
     open_template_with_defaults,
     parse_fields,

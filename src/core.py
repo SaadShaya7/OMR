@@ -6,9 +6,9 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-import src.constants as constants
-from src.logger import logger
-from src.utils.image import CLAHE_HELPER, ImageUtils
+import constants as constants
+from logger import logger
+from utils.image import CLAHE_HELPER, ImageUtils
 
 
 class ImageInstanceOps:
@@ -51,12 +51,12 @@ class ImageInstanceOps:
             final_marked = img.copy()
 
             morph = img.copy()
-            self.append_save_img(3, morph)
+            # self.append_save_img(3, morph)
 
             if auto_align:
 
                 morph = CLAHE_HELPER.apply(morph)
-                self.append_save_img(3, morph)
+                # self.append_save_img(3, morph)
 
                 morph = ImageUtils.adjust_gamma(
                     morph, config.threshold_params.GAMMA_LOW
@@ -64,7 +64,7 @@ class ImageInstanceOps:
 
                 _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
                 morph = ImageUtils.normalize_util(morph)
-                self.append_save_img(3, morph)
+                # self.append_save_img(3, morph)
 
             alpha = 0.65
             omr_response = {}
@@ -79,16 +79,16 @@ class ImageInstanceOps:
                 _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
                 morph_v = 255 - ImageUtils.normalize_util(morph_v)
 
-                self.append_save_img(3, morph_v)
+                # self.append_save_img(3, morph_v)
 
                 morph_thr = 60
                 _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
 
                 morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
 
-                self.append_save_img(3, morph_v)
+                # self.append_save_img(3, morph_v)
 
-                self.append_save_img(6, morph_v)
+                # self.append_save_img(6, morph_v)
 
                 for field_block in template.field_blocks:
                     s, d = field_block.origin, field_block.dimensions
@@ -139,7 +139,7 @@ class ImageInstanceOps:
 
                     field_block.shift = shift
 
-            self.append_save_img(5, img)
+            # self.append_save_img(5, img)
 
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
             total_q_strip_no = 0
@@ -267,17 +267,17 @@ class ImageInstanceOps:
                 final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked
             )
 
-            if config.outputs.save_detections and save_dir is not None:
-                if multi_roll:
-                    save_dir = save_dir.joinpath("_MULTI_")
-                image_path = str(save_dir.joinpath(name))
-                ImageUtils.save_img(image_path, final_marked)
+            # if config.outputs.save_detections and save_dir is not None:
+            #     if multi_roll:
+            #         save_dir = save_dir.joinpath("_MULTI_")
+            #     image_path = str(save_dir.joinpath(name))
+            #     ImageUtils.save_img(image_path, final_marked)
 
-            self.append_save_img(2, final_marked)
+            # self.append_save_img(2, final_marked)
 
-            if save_dir is not None:
-                for i in range(config.outputs.save_image_level):
-                    self.save_image_stacks(i + 1, name, save_dir)
+            # if save_dir is not None:
+            #     for i in range(config.outputs.save_image_level):
+            #         self.save_image_stacks(i + 1, name, save_dir)
 
             return omr_response, final_marked, multi_marked, multi_roll
 

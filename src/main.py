@@ -1,30 +1,25 @@
-from pathlib import Path
-import sys
-from flask import Flask, request, jsonify
+import base64
+import io
 import json
+import os
 import tempfile
 import logging
-
-# Adjust the path to your package root
-package_root = Path(__file__).resolve().parent.parent
-sys.path.append(str(package_root))
-
+from flask import Flask, request, jsonify
+from PIL import Image
 from entry import entry_point
-
 
 app = Flask(__name__)
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-
 @app.route("/processImage", methods=["POST"])
 def process_image():
-    if "image" not in request.files or "template" not in request.form:
-        return jsonify({"error": "Image and template are required"}), 400
+    image_file = request.files.get("image")
+    template_str = request.form.get("template")
 
-    image_file = request.files["image"]
-    template_str = request.form["template"]
+    if not image_file or not template_str:
+        return jsonify({"error": "Image and template are required"}), 400
 
     try:
         template = json.loads(template_str)
@@ -35,32 +30,37 @@ def process_image():
     temp_template_path = None
 
     try:
-        temp_image_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-        temp_image_path = temp_image_file.name
-        temp_image_file.write(image_file.read())
-        temp_image_file.close()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_image_file:
+            temp_image_file.write(image_file.read())
+            temp_image_path = temp_image_file.name
 
-        # Save the template to a temporary file
-        temp_template_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
-        temp_template_path = temp_template_file.name
-        with open(temp_template_path, "w") as f:
-            json.dump(template, f)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w') as temp_template_file:
+            json.dump(template, temp_template_file)
+            temp_template_path = temp_template_file.name
 
         # Process the image using the template
-        entry_point(temp_image_path, temp_template_path)
+        ndArrayResponse = entry_point(temp_image_path, temp_template_path)
+        processed_image = Image.fromarray(ndArrayResponse)
+        buffer = io.BytesIO()
+        processed_image.save(buffer, format="JPEG")
+        image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-        return jsonify({"message": "Image processed successfully"}), 200
+        # Return the base64 encoded image as part of the JSON response
+        return jsonify({
+            "message": "Image processed successfully",
+            "response": image_base64,
+        }), 200
 
     except Exception as e:
         logging.error("An error occurred: %s", e, exc_info=True)
         return jsonify({"error": str(e)}), 500
 
-    # finally:
-    #     # Clean up temporary files
-    #     if temp_image_path and os.path.exists(temp_image_path):
-    #         os.remove(temp_image_path)
-    #     if temp_template_path and os.path.exists(temp_template_path):
-    #         os.remove(temp_template_path)
+    finally:
+        # Clean up temporary files
+        if temp_image_path:
+            os.remove(temp_image_path)
+        if temp_template_path:
+            os.remove(temp_template_path)
 
 
 if __name__ == "__main__":

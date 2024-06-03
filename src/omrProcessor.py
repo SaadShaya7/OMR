@@ -5,7 +5,7 @@ import numpy as np
 import logging
 
 from src import constants
-from src.defaults.config import CONFIG_DEFAULTS
+from defaults.config import CONFIG_DEFAULTS
 
 logger = logging.getLogger(__name__)
 

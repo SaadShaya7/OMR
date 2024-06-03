@@ -5,10 +5,10 @@ https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-det
 import cv2
 import numpy as np
 
-from src.logger import logger
-from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
-from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
+from logger import logger
+from processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from utils.image import ImageUtils
+from utils.interaction import InteractionUtils
 
 MIN_PAGE_AREA = 80000
 
