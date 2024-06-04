@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 from typing import Any
 
@@ -9,6 +8,8 @@ import numpy as np
 import constants as constants
 from logger import logger
 from utils.image import CLAHE_HELPER, ImageUtils
+
+from threshholdCalcluator4 import ThresholdCalculator
 
 
 class ImageInstanceOps:
@@ -79,16 +80,10 @@ class ImageInstanceOps:
                 _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
                 morph_v = 255 - ImageUtils.normalize_util(morph_v)
 
-                # self.append_save_img(3, morph_v)
-
                 morph_thr = 60
                 _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
 
                 morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
-
-                # self.append_save_img(3, morph_v)
-
-                # self.append_save_img(6, morph_v)
 
                 for field_block in template.field_blocks:
                     s, d = field_block.origin, field_block.dimensions
@@ -138,8 +133,6 @@ class ImageInstanceOps:
                         steps += 1
 
                     field_block.shift = shift
-
-            # self.append_save_img(5, img)
 
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
             total_q_strip_no = 0
@@ -206,7 +199,7 @@ class ImageInstanceOps:
                                 bubble.y,
                                 bubble.field_value,
                             )
-                            cv2.rectangle(
+                            cv2.rectangle(  # TODO MODIFY THID
                                 final_marked,
                                 (int(x + box_w / 12), int(y + box_h / 12)),
                                 (
@@ -217,7 +210,7 @@ class ImageInstanceOps:
                                 3,
                             )
 
-                            cv2.putText(
+                            cv2.putText(  # TODO MODIFY THIS
                                 final_marked,
                                 str(field_value),
                                 (x, y),
@@ -283,81 +276,6 @@ class ImageInstanceOps:
 
         except Exception as e:
             raise e
-
-    @staticmethod
-    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
-        img = ImageUtils.resize_util(
-            img, template.page_dimensions[0], template.page_dimensions[1]
-        )
-        final_align = img.copy()
-        img_width = template.page_dimensions[0]
-
-        for field_block in template.field_blocks:
-            s, d = field_block.origin, field_block.dimensions
-            box_w, box_h = field_block.bubble_dimensions
-            shift = field_block.shift
-
-            s = (img_width - s[0] - d[0], s[1])
-
-            if shifted:
-                cv2.rectangle(
-                    final_align,
-                    (s[0] - shift, s[1]),
-                    (s[0] - shift + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
-                    2,
-                )
-            else:
-                cv2.rectangle(
-                    final_align,
-                    (s[0], s[1]),
-                    (s[0] + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
-                    2,
-                )
-            for field_block_bubbles in field_block.traverse_bubbles:
-                for pt in field_block_bubbles:
-
-                    x, y = (
-                        (img_width - pt.x - box_w + field_block.shift, pt.y)
-                        if shifted
-                        else (img_width - pt.x - box_w, pt.y)
-                    )
-                    cv2.rectangle(
-                        final_align,
-                        (int(x + box_w / 10), int(y + box_h / 10)),
-                        (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
-                        constants.CLR_GRAY,
-                        1,
-                    )
-                    if draw_qvals:
-                        rect = [y, y + box_h, x, x + box_w]
-                        cv2.putText(
-                            final_align,
-                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
-                            (rect[2] + 2, rect[0] + (box_h * 2) // 3),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            constants.CLR_BLACK,
-                            2,
-                        )
-
-            if shifted:
-                text_in_px = cv2.getTextSize(
-                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
-                )
-
-                cv2.putText(
-                    final_align,
-                    field_block.name,
-                    (int(s[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    constants.TEXT_SIZE,
-                    constants.CLR_BLACK,
-                    4,
-                )
-
-        return final_align
 
     def get_global_threshold(
         self,
@@ -523,32 +441,3 @@ class ImageInstanceOps:
             if plot_show:
                 plt.show()
         return thr1
-
-    def append_save_img(self, key, img):
-        if self.save_image_level >= int(key):
-            self.save_img_list[key].append(img.copy())
-
-    def save_image_stacks(self, key, filename, save_dir):
-        config = self.tuning_config
-        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
-            name = os.path.splitext(filename)[0]
-            result = np.hstack(
-                tuple(
-                    [
-                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
-                        for img in self.save_img_list[key]
-                    ]
-                )
-            )
-            result = ImageUtils.resize_util(
-                result,
-                min(
-                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
-                    int(config.dimensions.display_width * 2.5),
-                ),
-            )
-            ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)
-
-    def reset_all_save_img(self):
-        for i in range(self.save_image_level):
-            self.save_img_list[i + 1] = []

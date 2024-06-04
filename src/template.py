@@ -25,26 +25,23 @@ class Template:
         self.image_instance_ops = ImageInstanceOps(tuning_config)
 
         json_object = open_template_with_defaults(template_path)
+
+        self.bubble_dimensions = [14, 14]
+        self.page_dimensions = [524, 772]
+        self.global_empty_val = ""
+
         (
             custom_labels_object,
             field_blocks_object,
             output_columns_array,
-            pre_processors_object,
-            self.bubble_dimensions,
-            self.global_empty_val,
             self.options,
-            self.page_dimensions,
         ) = map(
             json_object.get,
             [
                 "customLabels",
                 "fieldBlocks",
                 "outputColumns",
-                "preProcessors",
-                "bubbleDimensions",
-                "emptyValue",
                 "options",
-                "pageDimensions",
             ],
         )
 

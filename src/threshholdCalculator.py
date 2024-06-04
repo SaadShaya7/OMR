@@ -63,8 +63,8 @@ class ThresholdCalculator:
                 threshold2 = new_threshold
 
         threshold = threshold1
-        lower_bound = threshold - max_jump1 / 2
-        upper_bound = threshold + max_jump1 / 2
+        lower_bound = threshold - max_jump1 // 2
+        upper_bound = threshold + max_jump1 // 2
 
         if plot_title:
             self._plot_thresholds(

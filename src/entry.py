@@ -3,11 +3,7 @@ import cv2
 from defaults import CONFIG_DEFAULTS
 from logger import logger
 from template import Template
-from utils.interaction import Stats
 from utils.parsing import get_concatenated_response
-
-
-STATS = Stats()
 
 
 def entry_point(image_path, template_path):
@@ -24,8 +20,8 @@ def process_image(image_path, template_path):
     if in_omr is None:
         raise Exception(f"Could not read the provided image")
 
-    template.image_instance_ops.reset_all_save_img()
-    template.image_instance_ops.append_save_img(1, in_omr)
+    # template.image_instance_ops.reset_all_save_img()
+    # template.image_instance_ops.append_save_img(1, in_omr)
     in_omr = template.image_instance_ops.apply_preprocessors(
         image_path, in_omr, template
     )
