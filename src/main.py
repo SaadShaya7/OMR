@@ -6,8 +6,7 @@ import tempfile
 import logging
 from flask import Flask, request, jsonify
 from PIL import Image
-
-from src.entry import entry_point
+from entry import entry_point
 
 app = Flask(__name__)
 
