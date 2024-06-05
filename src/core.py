@@ -5,8 +5,8 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-import constants as constants
-from logger import logger
+import src.constants as constants
+from src.logger import logger
 from utils.image import CLAHE_HELPER, ImageUtils
 
 

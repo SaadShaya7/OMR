@@ -1,8 +1,8 @@
 from pathlib import Path
 import cv2
-from defaults import CONFIG_DEFAULTS
-from logger import logger
-from template import Template
+from src.defaults import CONFIG_DEFAULTS
+from src.logger import logger
+from src.template import Template
 from utils.parsing import get_concatenated_response
 
 
