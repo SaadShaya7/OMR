@@ -42,8 +42,4 @@ def process_image(image_path, template_path):
 
     omr_response = get_concatenated_response(response_dict, template)
 
-    score = 0
-
-    logger.info(f"Processed image {file_id} with score {score}")
-
-    return final_marked
+    return final_marked, omr_response

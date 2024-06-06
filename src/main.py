@@ -50,7 +50,7 @@ def process_image():
 
         # Process the image using the template
         logging.info("Processing the image using the template")
-        ndArrayResponse = entry_point(temp_image_path, temp_template_path)
+        ndArrayResponse, omr_response = entry_point(temp_image_path, temp_template_path)
         processed_image = Image.fromarray(ndArrayResponse)
         buffer = io.BytesIO()
         processed_image.save(buffer, format="JPEG")
@@ -62,6 +62,7 @@ def process_image():
             jsonify(
                 {
                     "message": "Image processed successfully",
+                    "recognizedMarks": omr_response,
                     "response": image_base64,
                 }
             ),
@@ -82,4 +83,4 @@ def process_image():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=55001)
+    app.run(debug=True)
