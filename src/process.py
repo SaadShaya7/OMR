@@ -2,8 +2,6 @@ import sys
 import base64
 import io
 import json
-import os
-import tempfile
 from PIL import Image
 from entry import entry_point
 
