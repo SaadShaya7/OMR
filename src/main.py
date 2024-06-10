@@ -61,9 +61,8 @@ def process_image():
         return (
             jsonify(
                 {
-                    "message": "Image processed successfully",
-                    "recognizedMarks": omr_response,
-                    "response": image_base64,
+                    "detectedMarks": omr_response,
+                    "markedImage": image_base64,
                 }
             ),
             200,
@@ -83,4 +82,4 @@ def process_image():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
