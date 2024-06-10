@@ -17,11 +17,10 @@ def process_image(image_path, template_path):
     template = Template(Path(template_path), tuning_config)
 
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+
     if in_omr is None:
         raise Exception(f"Could not read the provided image")
 
-    # template.image_instance_ops.reset_all_save_img()
-    # template.image_instance_ops.append_save_img(1, in_omr)
     in_omr = template.image_instance_ops.apply_preprocessors(
         image_path, in_omr, template
     )

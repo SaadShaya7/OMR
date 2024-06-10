@@ -9,8 +9,6 @@ import constants as constants
 from logger import logger
 from utils.image import CLAHE_HELPER, ImageUtils
 
-from threshholdCalcluator4 import ThresholdCalculator
-
 
 class ImageInstanceOps:
     """Class to hold fine-tuned utilities for a group of images. One instance for each processing directory."""
@@ -37,7 +35,7 @@ class ImageInstanceOps:
 
     def read_omr_response(self, template, image, name, save_dir=None):
         config = self.tuning_config
-        auto_align = config.alignment_params.auto_align
+        auto_align = True
         try:
             img = image.copy()
 
@@ -48,16 +46,13 @@ class ImageInstanceOps:
             if img.max() > img.min():
                 img = ImageUtils.normalize_util(img)
 
-            transp_layer = img.copy()
             final_marked = img.copy()
 
             morph = img.copy()
-            # self.append_save_img(3, morph)
 
             if auto_align:
 
                 morph = CLAHE_HELPER.apply(morph)
-                # self.append_save_img(3, morph)
 
                 morph = ImageUtils.adjust_gamma(
                     morph, config.threshold_params.GAMMA_LOW
@@ -65,9 +60,7 @@ class ImageInstanceOps:
 
                 _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
                 morph = ImageUtils.normalize_util(morph)
-                # self.append_save_img(3, morph)
 
-            alpha = 0.65
             omr_response = {}
             multi_marked, multi_roll = 0, 0
 
@@ -165,6 +158,7 @@ class ImageInstanceOps:
             )
 
             per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
+            final_marked  = cv2.cvtColor(final_marked, cv2.COLOR_GRAY2BGR)
             for field_block in template.field_blocks:
                 block_q_strip_no = 1
                 box_w, box_h = field_block.bubble_dimensions
@@ -192,6 +186,7 @@ class ImageInstanceOps:
                             per_q_strip_threshold > all_q_vals[total_q_box_no]
                         )
                         total_q_box_no += 1
+
                         if bubble_is_marked:
                             detected_bubbles.append(bubble)
                             x, y, field_value = (
@@ -199,37 +194,17 @@ class ImageInstanceOps:
                                 bubble.y,
                                 bubble.field_value,
                             )
-                            cv2.rectangle(  # TODO MODIFY THID
+                            cv2.rectangle(
                                 final_marked,
                                 (int(x + box_w / 12), int(y + box_h / 12)),
                                 (
                                     int(x + box_w - box_w / 12),
                                     int(y + box_h - box_h / 12),
                                 ),
-                                constants.CLR_DARK_GRAY,
-                                3,
+                                (0, 255, 0),
+                                2,
                             )
 
-                            cv2.putText(  # TODO MODIFY THIS
-                                final_marked,
-                                str(field_value),
-                                (x, y),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                constants.TEXT_SIZE,
-                                (20, 20, 10),
-                                int(1 + 3.5 * constants.TEXT_SIZE),
-                            )
-                        else:
-                            cv2.rectangle(
-                                final_marked,
-                                (int(x + box_w / 10), int(y + box_h / 10)),
-                                (
-                                    int(x + box_w - box_w / 10),
-                                    int(y + box_h - box_h / 10),
-                                ),
-                                constants.CLR_GRAY,
-                                -1,
-                            )
 
                     for bubble in detected_bubbles:
                         field_label, field_value = (
@@ -256,22 +231,7 @@ class ImageInstanceOps:
             per_omr_threshold_avg /= total_q_strip_no
             per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
 
-            cv2.addWeighted(
-                final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked
-            )
-
-            # if config.outputs.save_detections and save_dir is not None:
-            #     if multi_roll:
-            #         save_dir = save_dir.joinpath("_MULTI_")
-            #     image_path = str(save_dir.joinpath(name))
-            #     ImageUtils.save_img(image_path, final_marked)
-
-            # self.append_save_img(2, final_marked)
-
-            # if save_dir is not None:
-            #     for i in range(config.outputs.save_image_level):
-            #         self.save_image_stacks(i + 1, name, save_dir)
-
+            final_marked = cv2.flip(final_marked, 2)
             return omr_response, final_marked, multi_marked, multi_roll
 
         except Exception as e:
