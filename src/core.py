@@ -158,7 +158,8 @@ class ImageInstanceOps:
             )
 
             per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
-            final_marked  = cv2.cvtColor(final_marked, cv2.COLOR_GRAY2BGR)
+            final_marked = cv2.cvtColor(final_marked, cv2.COLOR_GRAY2BGR)
+
             for field_block in template.field_blocks:
                 block_q_strip_no = 1
                 box_w, box_h = field_block.bubble_dimensions
@@ -166,6 +167,7 @@ class ImageInstanceOps:
                 s, d = field_block.origin, field_block.dimensions
                 key = field_block.name[:3]
 
+                question_index = 0
                 for field_block_bubbles in field_block.traverse_bubbles:
 
                     no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
@@ -194,17 +196,45 @@ class ImageInstanceOps:
                                 bubble.y,
                                 bubble.field_value,
                             )
-                            cv2.rectangle(
-                                final_marked,
-                                (int(x + box_w / 12), int(y + box_h / 12)),
-                                (
-                                    int(x + box_w - box_w / 12),
-                                    int(y + box_h - box_h / 12),
-                                ),
-                                (0, 255, 0),
-                                2,
-                            )
 
+                            if field_block.correct_answers == None:
+                                cv2.rectangle(
+                                    final_marked,
+                                    (int(x + box_w / 12), int(y + box_h / 12)),
+                                    (
+                                        int(x + box_w - box_w / 12),
+                                        int(y + box_h - box_h / 12),
+                                    ),
+                                    (0, 0, 255),
+                                    2,
+                                )
+
+                            elif (
+                                field_block.correct_answers[question_index]
+                                == bubble.field_value
+                            ):
+
+                                cv2.rectangle(
+                                    final_marked,
+                                    (int(x + box_w / 12), int(y + box_h / 12)),
+                                    (
+                                        int(x + box_w - box_w / 12),
+                                        int(y + box_h - box_h / 12),
+                                    ),
+                                    (0, 255, 0),
+                                    2,
+                                )
+                            else:
+                                cv2.rectangle(
+                                    final_marked,
+                                    (int(x + box_w / 12), int(y + box_h / 12)),
+                                    (
+                                        int(x + box_w - box_w / 12),
+                                        int(y + box_h - box_h / 12),
+                                    ),
+                                    (255, 0, 0),
+                                    2,
+                                )
 
                     for bubble in detected_bubbles:
                         field_label, field_value = (
@@ -227,6 +257,7 @@ class ImageInstanceOps:
 
                     block_q_strip_no += 1
                     total_q_strip_no += 1
+                    question_index += 1
 
             per_omr_threshold_avg /= total_q_strip_no
             per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
@@ -401,3 +432,65 @@ class ImageInstanceOps:
             if plot_show:
                 plt.show()
         return thr1
+
+    @staticmethod
+    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
+        img = ImageUtils.resize_util(
+            img, template.page_dimensions[0], template.page_dimensions[1]
+        )
+        final_align = img.copy()
+        for field_block in template.field_blocks:
+            s, d = field_block.origin, field_block.dimensions
+            box_w, box_h = field_block.bubble_dimensions
+            shift = field_block.shift
+            if shifted:
+                cv2.rectangle(
+                    final_align,
+                    (s[0] + shift, s[1]),
+                    (s[0] + shift + d[0], s[1] + d[1]),
+                    constants.CLR_BLACK,
+                    3,
+                )
+            else:
+                cv2.rectangle(
+                    final_align,
+                    (s[0], s[1]),
+                    (s[0] + d[0], s[1] + d[1]),
+                    constants.CLR_BLACK,
+                    3,
+                )
+            for field_block_bubbles in field_block.traverse_bubbles:
+                for pt in field_block_bubbles:
+                    x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
+                    cv2.rectangle(
+                        final_align,
+                        (int(x + box_w / 10), int(y + box_h / 10)),
+                        (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
+                        constants.CLR_GRAY,
+                        border,
+                    )
+                    if draw_qvals:
+                        rect = [y, y + box_h, x, x + box_w]
+                        cv2.putText(
+                            final_align,
+                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
+                            (rect[2] + 2, rect[0] + (box_h * 2) // 3),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            constants.CLR_BLACK,
+                            2,
+                        )
+            if shifted:
+                text_in_px = cv2.getTextSize(
+                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+                )
+                cv2.putText(
+                    final_align,
+                    field_block.name,
+                    (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    constants.TEXT_SIZE,
+                    constants.CLR_BLACK,
+                    4,
+                )
+        return final_align

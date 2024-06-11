@@ -1,7 +1,7 @@
 from pathlib import Path
 import cv2
 from defaults import CONFIG_DEFAULTS
-from logger import logger
+from utils.interaction import InteractionUtils
 from template import Template
 from utils.parsing import get_concatenated_response
 
@@ -17,6 +17,8 @@ def process_image(image_path, template_path):
     template = Template(Path(template_path), tuning_config)
 
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+
+    # show_template_layouts(str(image_path), template, tuning_config)
 
     if in_omr is None:
         raise Exception(f"Could not read the provided image")
@@ -42,3 +44,17 @@ def process_image(image_path, template_path):
     omr_response = get_concatenated_response(response_dict, template)
 
     return final_marked, omr_response
+
+
+def show_template_layouts(file_path, template, tuning_config):
+    in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+    in_omr = cv2.flip(in_omr, 1)
+    in_omr = template.image_instance_ops.apply_preprocessors(
+        file_path, in_omr, template
+    )
+    template_layout = template.image_instance_ops.draw_template_layout(
+        in_omr, template, shifted=False, border=2
+    )
+    InteractionUtils.show(
+        f"Template Layout", template_layout, 1, 1, config=tuning_config
+    )

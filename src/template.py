@@ -232,6 +232,7 @@ class FieldBlock:
             labels_gap,
             origin,
             self.empty_val,
+            correct_answers,
         ) = map(
             field_block_object.get,
             [
@@ -244,13 +245,17 @@ class FieldBlock:
                 "labelsGap",
                 "origin",
                 "emptyValue",
+                "correctAnswers",
             ],
         )
         self.parsed_field_labels = parse_fields(
             f"Field Block Labels: {self.name}", field_labels
         )
+
+        print(correct_answers)
         self.origin = origin
         self.bubble_dimensions = bubble_dimensions
+        self.correct_answers = correct_answers
         self.calculate_block_dimensions(
             bubble_dimensions,
             bubble_values,
