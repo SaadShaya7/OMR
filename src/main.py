@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 import logging
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 from PIL import Image
 from entry import entry_point
 
@@ -52,20 +52,20 @@ def process_image():
         logging.info("Processing the image using the template")
         ndArrayResponse, omr_response = entry_point(temp_image_path, temp_template_path)
         processed_image = Image.fromarray(ndArrayResponse)
+        buffer = io.BytesIO()
+        processed_image.save(buffer, format="JPEG")
+        image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-        # Create a temporary file for the processed image
-        with tempfile.NamedTemporaryFile(
-            suffix=".jpg", delete=False
-        ) as temp_processed_image_file:
-            processed_image.save(temp_processed_image_file, format="JPEG")
-            processed_image_path = temp_processed_image_file.name
-
+        # Return the base64 encoded image as part of the JSON response
         logging.info("Image processed successfully")
-        return send_file(
-            processed_image_path,
-            mimetype="image/jpeg",
-            as_attachment=True,
-            download_name="processed_image.jpg",
+        return (
+            jsonify(
+                {
+                    "detectedMarks": omr_response,
+                    "markedImage": image_base64,
+                }
+            ),
+            200,
         )
 
     except Exception as e:
@@ -79,8 +79,7 @@ def process_image():
             os.remove(temp_image_path)
         if temp_template_path:
             os.remove(temp_template_path)
-        # if processed_image_path and os.path.exists(processed_image_path):
-        #     os.remove(processed_image_path)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
