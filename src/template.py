@@ -28,7 +28,7 @@ class Template:
 
         self.bubble_dimensions = [14, 14]
         self.page_dimensions = [524, 772]
-        self.global_empty_val = ""
+        self.global_empty_val = None
 
         (
             custom_labels_object,

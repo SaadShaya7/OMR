@@ -30,8 +30,8 @@ FIELD_TYPES = {
         "direction": "vertical",
     },
     "TRUEFALSE": {"bubbleValues": [2, 1], "direction": "horizontal"},
-    "QTYPE_MCQ3": {"bubbleValues": [3, 2, 1], "direction": "horizontal"},
-    "QTYPE_MCQ4": {"bubbleValues": [4, 3, 2, 1], "direction": "horizontal"},
+    "QTYPE_MCQ3": {"bubbleValues": [1, 2, 3], "direction": "horizontal"},
+    "QTYPE_MCQ4": {"bubbleValues": [1, 2, 3, 4], "direction": "horizontal"},
     "FORM": {
         "bubbleValues": ["A", "B", "C", "D"],
         "direction": "vertical",

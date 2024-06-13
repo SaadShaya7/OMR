@@ -32,12 +32,7 @@ def process_image(image_path, template_path):
 
     file_id = Path(image_path).name
     # save_dir = outputs_namespace.paths.save_marked_dir
-    (
-        response_dict,
-        final_marked,
-        multi_marked,
-        _,
-    ) = template.image_instance_ops.read_omr_response(
+    (response_dict, final_marked) = template.image_instance_ops.read_omr_response(
         template, image=in_omr, name=file_id
     )
 

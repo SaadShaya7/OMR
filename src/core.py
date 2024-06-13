@@ -62,7 +62,6 @@ class ImageInstanceOps:
                 morph = ImageUtils.normalize_util(morph)
 
             omr_response = {}
-            multi_marked, multi_roll = 0, 0
 
             if auto_align:
 
@@ -242,14 +241,7 @@ class ImageInstanceOps:
                             bubble.field_value,
                         )
 
-                        multi_marked_local = field_label in omr_response
-                        omr_response[field_label] = (
-                            (omr_response[field_label] + field_value)
-                            if multi_marked_local
-                            else field_value
-                        )
-
-                        multi_marked = multi_marked or multi_marked_local
+                        omr_response[field_label] = field_value
 
                     if len(detected_bubbles) == 0:
                         field_label = field_block_bubbles[0].field_label
@@ -263,7 +255,7 @@ class ImageInstanceOps:
             per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
 
             final_marked = cv2.flip(final_marked, 2)
-            return omr_response, final_marked, multi_marked, multi_roll
+            return (omr_response, final_marked)
 
         except Exception as e:
             raise e
