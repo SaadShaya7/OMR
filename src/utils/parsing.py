@@ -5,11 +5,11 @@ from fractions import Fraction
 from deepmerge import Merger
 from dotmap import DotMap
 
-from src.constants import FIELD_LABEL_NUMBER_REGEX
-from src.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
-from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
-from src.utils.file import load_json
-from src.utils.validations import (
+from constants import FIELD_LABEL_NUMBER_REGEX
+from defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
+from schemas.constants import FIELD_STRING_REGEX_GROUPS
+from utils.file import load_json
+from utils.validations import (
     validate_config_json,
     validate_evaluation_json,
     validate_template_json,
@@ -43,16 +43,6 @@ def get_concatenated_response(omr_response, template):
         concatenated_response[field_label] = omr_response[field_label]
 
     return concatenated_response
-
-
-def open_config_with_defaults(config_path):
-    user_tuning_config = load_json(config_path)
-    user_tuning_config = OVERRIDE_MERGER.merge(
-        deepcopy(CONFIG_DEFAULTS), user_tuning_config
-    )
-    validate_config_json(user_tuning_config, config_path)
-    # https://github.com/drgrib/dotmap/issues/74
-    return DotMap(user_tuning_config, _dynamic=False)
 
 
 def open_template_with_defaults(template_path):

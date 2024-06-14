@@ -1,5 +1,5 @@
-from src.constants import FIELD_TYPES
-from src.schemas.constants import ARRAY_OF_STRINGS, FIELD_STRING_TYPE
+from constants import FIELD_TYPES
+from schemas.constants import ARRAY_OF_STRINGS, FIELD_STRING_TYPE
 
 positive_number = {"type": "number", "minimum": 0}
 positive_integer = {"type": "integer", "minimum": 0}
@@ -11,6 +11,11 @@ two_positive_integers = {
     ],
     "maxItems": 2,
     "minItems": 2,
+}
+positive_integers = {
+    "type": "array",
+    "items": {"type": "integer", "minimum": 1},
+    "minItems": 1,
 }
 two_positive_numbers = {
     "type": "array",
@@ -200,6 +205,7 @@ TEMPLATE_SCHEMA = {
                     ],
                     "properties": {
                         "bubbleDimensions": two_positive_numbers,
+                        "correctAnswers": positive_integers,
                         "bubblesGap": positive_number,
                         "bubbleValues": ARRAY_OF_STRINGS,
                         "direction": {
@@ -209,7 +215,7 @@ TEMPLATE_SCHEMA = {
                         "emptyValue": {"type": "string"},
                         "fieldLabels": {"type": "array", "items": FIELD_STRING_TYPE},
                         "labelsGap": positive_number,
-                        "origin": two_positive_integers,
+                        "origin": two_positive_numbers,
                         "fieldType": {
                             "type": "string",
                             "enum": list(FIELD_TYPES.keys()),

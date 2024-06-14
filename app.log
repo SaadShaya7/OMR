@@ -1,0 +1,4 @@
+Loading processors from "processors"...
+Loaded processors: ['CropOnMarkers', 'FeatureBasedAlignment', 'GaussianBlur', 'Levels', 'MedianBlur']
+ * Debugger is active!
+ * Debugger PIN: 101-355-618

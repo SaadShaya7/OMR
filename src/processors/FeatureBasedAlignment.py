@@ -2,12 +2,12 @@
 Image based feature alignment
 Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
 """
+
 import cv2
 import numpy as np
 
-from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
-from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
+from processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from utils.image import ImageUtils
 
 
 class FeatureBasedAlignment(ImagePreprocessor):
@@ -67,13 +67,6 @@ class FeatureBasedAlignment(ImagePreprocessor):
         # Remove not so good matches
         num_good_matches = int(len(matches) * self.good_match_percent)
         matches = matches[:num_good_matches]
-
-        # Draw top matches
-        if config.outputs.show_image_level > 2:
-            im_matches = cv2.drawMatches(
-                image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
-            )
-            InteractionUtils.show("Aligning", im_matches, resize=True, config=config)
 
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)

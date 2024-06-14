@@ -7,11 +7,12 @@
 
 """
 
-from src.constants import FIELD_TYPES
-from src.core import ImageInstanceOps
-from src.logger import logger
-from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.parsing import (
+import os
+from constants import FIELD_TYPES
+from core import ImageInstanceOps
+from logger import logger
+from processors.manager import PROCESSOR_MANAGER
+from utils.parsing import (
     custom_sort_output_columns,
     open_template_with_defaults,
     parse_fields,
@@ -24,37 +25,34 @@ class Template:
         self.image_instance_ops = ImageInstanceOps(tuning_config)
 
         json_object = open_template_with_defaults(template_path)
+
+        self.bubble_dimensions = [14, 14]
+        self.page_dimensions = [524, 772]
+        self.global_empty_val = None
+
         (
             custom_labels_object,
             field_blocks_object,
             output_columns_array,
-            pre_processors_object,
-            self.bubble_dimensions,
-            self.global_empty_val,
             self.options,
-            self.page_dimensions,
         ) = map(
             json_object.get,
             [
                 "customLabels",
                 "fieldBlocks",
                 "outputColumns",
-                "preProcessors",
-                "bubbleDimensions",
-                "emptyValue",
                 "options",
-                "pageDimensions",
             ],
         )
 
         self.parse_output_columns(output_columns_array)
-        self.setup_pre_processors(pre_processors_object, template_path.parent)
+        self.setup_pre_processors()
         self.setup_field_blocks(field_blocks_object)
         self.parse_custom_labels(custom_labels_object)
 
         non_custom_columns, all_custom_columns = (
             list(self.non_custom_labels),
-            list(custom_labels_object.keys()),
+            list(custom_labels_object.keys()),  #
         )
         # t
         if len(self.output_columns) == 0:
@@ -65,17 +63,23 @@ class Template:
     def parse_output_columns(self, output_columns_array):
         self.output_columns = parse_fields(f"Output Columns", output_columns_array)
 
-    def setup_pre_processors(self, pre_processors_object, relative_dir):
-        # load image pre_processors
-        self.pre_processors = []
-        for pre_processor in pre_processors_object:
-            ProcessorClass = PROCESSOR_MANAGER.processors[pre_processor["name"]]
-            pre_processor_instance = ProcessorClass(
-                options=pre_processor["options"],
-                relative_dir=relative_dir,
-                image_instance_ops=self.image_instance_ops,
-            )
-            self.pre_processors.append(pre_processor_instance)
+    def setup_pre_processors(self):
+        # Define the path to the marker image in the constants directory
+        marker_image_path = os.path.join(
+            os.path.dirname(__file__), "constants", "marker_image.jpg"
+        )
+
+        # Directly create an instance of CropOnMarkers with the hardcoded image path
+        ProcessorClass = PROCESSOR_MANAGER.processors["CropOnMarkers"]
+        pre_processor_instance = ProcessorClass(
+            options={
+                "relativePath": marker_image_path,
+                "sheetToMarkerWidthRatio": 21,
+            },
+            relative_dir=os.path.dirname(__file__),
+            image_instance_ops=self.image_instance_ops,
+        )
+        self.pre_processors = [pre_processor_instance]
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
@@ -228,6 +232,7 @@ class FieldBlock:
             labels_gap,
             origin,
             self.empty_val,
+            correct_answers,
         ) = map(
             field_block_object.get,
             [
@@ -240,13 +245,17 @@ class FieldBlock:
                 "labelsGap",
                 "origin",
                 "emptyValue",
+                "correctAnswers",
             ],
         )
         self.parsed_field_labels = parse_fields(
             f"Field Block Labels: {self.name}", field_labels
         )
+
+        print(correct_answers)
         self.origin = origin
         self.bubble_dimensions = bubble_dimensions
+        self.correct_answers = correct_answers
         self.calculate_block_dimensions(
             bubble_dimensions,
             bubble_values,

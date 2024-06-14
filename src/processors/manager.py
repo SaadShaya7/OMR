@@ -2,10 +2,11 @@
 Processor/Extension framework
 Adapated from https://github.com/gdiepen/python_processor_example
 """
+
 import inspect
 import pkgutil
 
-from src.logger import logger
+from logger import logger
 
 
 class Processor:
@@ -29,10 +30,9 @@ class ProcessorManager:
     that contain a class definition that is inheriting from the Processor class
     """
 
-    def __init__(self, processors_dir="src.processors"):
-        """Constructor that initiates the reading of all available processors
-        when an instance of the ProcessorCollection object is created
-        """
+    def __init__(
+        self, processors_dir="processors"
+    ):  # Remove the space before "processors"
         self.processors_dir = processors_dir
         self.reload_processors()
 
@@ -54,22 +54,21 @@ class ProcessorManager:
         self.walk_package(self.processors_dir)
 
     def walk_package(self, package):
-        """walk the supplied package to retrieve all processors"""
-        imported_package = __import__(package, fromlist=["blah"])
         loaded_packages = []
+        imported_package = __import__(
+            package, fromlist=["blah"]
+        )  # Provide the module name to import
         for _, processor_name, ispkg in pkgutil.walk_packages(
             imported_package.__path__, imported_package.__name__ + "."
         ):
             if not ispkg and processor_name != __name__:
                 processor_module = __import__(processor_name, fromlist=["blah"])
-                # https://stackoverflow.com/a/46206754/6242649
                 clsmembers = inspect.getmembers(
                     processor_module,
                     ProcessorManager.get_name_filter(processor_name),
                 )
                 for _, c in clsmembers:
-                    # Only add classes that are a sub class of Processor, but NOT Processor itself
-                    if issubclass(c, Processor) & (c is not Processor):
+                    if issubclass(c, Processor) and c is not Processor:
                         self.processors[c.__name__] = c
                         loaded_packages.append(c.__name__)
 

@@ -1,5 +1,4 @@
-# Use all imports relative to root directory
-from src.processors.manager import Processor
+from processors.manager import Processor
 
 
 class ImagePreprocessor(Processor):
