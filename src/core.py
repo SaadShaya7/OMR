@@ -2,11 +2,11 @@ from collections import defaultdict
 from typing import Any
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
 import constants as constants
 from logger import logger
+from threshholdCalculator import ThresholdCalculator
 from utils.image import CLAHE_HELPER, ImageUtils
 
 
@@ -129,6 +129,7 @@ class ImageInstanceOps:
     def read_omr_response(self, template, image):
         config = self.tuning_config
         auto_align = True
+        threshhold_calculator = ThresholdCalculator(config)
 
         try:
             img = image.copy()
@@ -154,7 +155,6 @@ class ImageInstanceOps:
             all_standard_deviation_values = []
             total_strip_count = 0
 
-            # Iterate through each field block in the template
             for field_block in template.field_blocks:
                 bubble_width, bubble_height = field_block.bubble_dimensions
                 field_standard_deviation_values = []
@@ -186,11 +186,13 @@ class ImageInstanceOps:
                 # Extend the overall standard deviation values with the field's standard deviation values
                 all_standard_deviation_values.extend(field_standard_deviation_values)
 
-            global_std_thresh, _, _ = self.get_global_threshold(
+            global_std_thresh, _, _ = threshhold_calculator.get_global_threshold(
                 all_standard_deviation_values
             )
 
-            global_thr, _, _ = self.get_global_threshold(all_mean_values, looseness=4)
+            global_thr, _, _ = threshhold_calculator.get_global_threshold(
+                all_mean_values, looseness=4
+            )
 
             logger.info(
                 f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
@@ -219,12 +221,10 @@ class ImageInstanceOps:
                     )
 
                     # Get the local threshold for the current strip of bubbles
-                    strip_threshold = self.get_local_threshold(
+                    strip_threshold = threshhold_calculator.get_local_threshold(
                         all_strip_values_arrays[total_strip_count],
                         global_thr,
                         no_outliers,
-                        f"Mean Intensity Histogram for {block_key}.{bubble_group[0].field_label}.{block_strip_count}",
-                        config.outputs.show_image_level >= 6,
                     )
 
                     omr_threshold_avg += strip_threshold
@@ -294,171 +294,6 @@ class ImageInstanceOps:
 
         except Exception as e:
             raise e
-
-    def get_global_threshold(
-        self,
-        q_vals_orig,
-        plot_title=None,
-        plot_show=True,
-        sort_in_plot=True,
-        looseness=1,
-    ):
-        """
-        Note: Cannot assume qStrip has only-gray or only-white bg
-            (in which case there is only one jump).
-        So there will be either 1 or 2 jumps.
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
-
-        2 Jumps :
-                ......
-                |||||| <-- wrong THR
-            ....||||||
-            |||||||||| <-- safe THR
-            ..||||||||||
-            ||||||||||||
-
-        The abstract "First LARGE GAP" is perfect for this.
-        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big,
-            gives the smaller one
-
-        """
-        config = self.tuning_config
-        PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
-            config.threshold_params.get,
-            [
-                "PAGE_TYPE_FOR_THRESHOLD",
-                "MIN_JUMP",
-                "JUMP_DELTA",
-            ],
-        )
-
-        global_default_threshold = (
-            constants.GLOBAL_PAGE_THRESHOLD_WHITE
-            if PAGE_TYPE_FOR_THRESHOLD == "white"
-            else constants.GLOBAL_PAGE_THRESHOLD_BLACK
-        )
-
-        q_vals = sorted(q_vals_orig)
-
-        ls = (looseness + 1) // 2
-        l = len(q_vals) - ls
-        max1, thr1 = MIN_JUMP, global_default_threshold
-        for i in range(ls, l):
-            jump = q_vals[i + ls] - q_vals[i - ls]
-            if jump > max1:
-                max1 = jump
-                thr1 = q_vals[i - ls] + jump / 2
-
-        max2, thr2 = MIN_JUMP, global_default_threshold
-
-        for i in range(ls, l):
-            jump = q_vals[i + ls] - q_vals[i - ls]
-            new_thr = q_vals[i - ls] + jump / 2
-            if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
-                max2 = jump
-                thr2 = new_thr
-
-        global_thr, j_low, j_high = thr1, thr1 - max1 // 2, thr1 + max1 // 2
-
-        if plot_title:
-            _, ax = plt.subplots()
-            ax.bar(range(len(q_vals_orig)), q_vals if sort_in_plot else q_vals_orig)
-            ax.set_title(plot_title)
-            thrline = ax.axhline(global_thr, color="green", ls="--", linewidth=5)
-            thrline.set_label("Global Threshold")
-            thrline = ax.axhline(thr2, color="red", ls=":", linewidth=3)
-            thrline.set_label("THR2 Line")
-
-            ax.set_ylabel("Values")
-            ax.set_xlabel("Position")
-            ax.legend()
-            if plot_show:
-                plt.title(plot_title)
-                plt.show()
-
-        return global_thr, j_low, j_high
-
-    def get_local_threshold(
-        self, q_vals, global_thr, no_outliers, plot_title=None, plot_show=True
-    ):
-        """
-        TODO: Update this documentation too-
-        //No more - Assumption : Colwise background color is uniformly gray or white,
-                but not alternating. In this case there is atmost one jump.
-
-        0 Jump :
-                        <-- safe THR?
-            .......
-            ...|||||||
-            ||||||||||  <-- safe THR?
-        // How to decide given range is above or below gray?
-            -> global q_vals shall absolutely help here. Just run same function
-                on total q_vals instead of colwise _//
-        How to decide it is this case of 0 jumps
-
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
-
-        """
-        config = self.tuning_config
-
-        q_vals = sorted(q_vals)
-
-        if len(q_vals) < 3:
-            thr1 = (
-                global_thr
-                if np.max(q_vals) - np.min(q_vals) < config.threshold_params.MIN_GAP
-                else np.mean(q_vals)
-            )
-        else:
-
-            l = len(q_vals) - 1
-            max1, thr1 = config.threshold_params.MIN_JUMP, 255
-            for i in range(1, l):
-                jump = q_vals[i + 1] - q_vals[i - 1]
-                if jump > max1:
-                    max1 = jump
-                    thr1 = q_vals[i - 1] + jump / 2
-
-            confident_jump = (
-                config.threshold_params.MIN_JUMP
-                + config.threshold_params.CONFIDENT_SURPLUS
-            )
-
-            if max1 < confident_jump:
-                if no_outliers:
-
-                    thr1 = global_thr
-                else:
-
-                    pass
-
-        if plot_show and plot_title is not None:
-            _, ax = plt.subplots()
-            ax.bar(range(len(q_vals)), q_vals)
-            thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
-            thrline.set_label("Local Threshold")
-            thrline = ax.axhline(global_thr, color="red", ls=":", linewidth=5)
-            thrline.set_label("Global Threshold")
-            ax.set_title(plot_title)
-            ax.set_ylabel("Bubble Mean Intensity")
-            ax.set_xlabel("Bubble Number(sorted)")
-            ax.legend()
-
-            if plot_show:
-                plt.show()
-        return thr1
 
     @staticmethod
     def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
