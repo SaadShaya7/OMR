@@ -33,9 +33,103 @@ class ImageInstanceOps:
             in_omr = pre_processor.apply_filter(in_omr, file_path)
         return in_omr
 
-    def read_omr_response(self, template, image, name, save_dir=None):
+    def apply_auto_align(self, config, template, image):
+        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        image = CLAHE_HELPER.apply(image)
+
+        # Adjust gamma for the image
+        image = ImageUtils.adjust_gamma(image, config.threshold_params.GAMMA_LOW)
+
+        # Apply threshold truncation
+        _, image = cv2.threshold(image, 220, 220, cv2.THRESH_TRUNC)
+        image = ImageUtils.normalize_util(image)
+
+        # Create a vertical structuring element for morphological operations
+        vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
+
+        # Apply morphological open operation
+        image_vertical = cv2.morphologyEx(
+            image, cv2.MORPH_OPEN, vertical_kernel, iterations=3
+        )
+
+        # Apply threshold truncation to the vertical image
+        _, image_vertical = cv2.threshold(image_vertical, 200, 200, cv2.THRESH_TRUNC)
+        image_vertical = 255 - ImageUtils.normalize_util(image_vertical)
+
+        # Apply binary thresholding
+        morph_threshold = 60
+        _, image_vertical = cv2.threshold(
+            image_vertical, morph_threshold, 255, cv2.THRESH_BINARY
+        )
+
+        # Erode the image
+        image_vertical = cv2.erode(
+            image_vertical, np.ones((5, 5), np.uint8), iterations=2
+        )
+
+        # Iterate through each field block in the template
+        for field_block in template.field_blocks:
+            origin, dimensions = field_block.origin, field_block.dimensions
+
+            # Retrieve alignment parameters from the configuration
+            match_col, max_steps, align_stride, thickness = (
+                config.alignment_params.get(param)
+                for param in ["match_col", "max_steps", "stride", "thickness"]
+            )
+
+            shift, steps = 0, 0
+            while steps < max_steps:
+                # Calculate the mean pixel value on the left side of the field block
+                left_mean = np.mean(
+                    image_vertical[
+                        origin[1] : origin[1] + dimensions[1],
+                        origin[0]
+                        + shift
+                        - thickness : origin[0]
+                        + shift
+                        + match_col
+                        - thickness,
+                    ]
+                )
+
+                # Calculate the mean pixel value on the right side of the field block
+                right_mean = np.mean(
+                    image_vertical[
+                        origin[1] : origin[1] + dimensions[1],
+                        origin[0]
+                        + shift
+                        + dimensions[0]
+                        - match_col
+                        + thickness : origin[0]
+                        + shift
+                        + dimensions[0]
+                        + thickness,
+                    ]
+                )
+
+                # Determine shift direction based on mean values
+                left_shift, right_shift = left_mean > 100, right_mean > 100
+                if left_shift:
+                    if right_shift:
+                        break
+                    else:
+                        shift -= align_stride
+                else:
+                    if right_shift:
+                        shift += align_stride
+                    else:
+                        break
+                steps += 1
+
+            # Assign the calculated shift to the field block
+            field_block.shift = shift
+
+        return template.field_blocks
+
+    def read_omr_response(self, template, image):
         config = self.tuning_config
         auto_align = True
+
         try:
             img = image.copy()
 
@@ -50,81 +144,10 @@ class ImageInstanceOps:
 
             morph = img.copy()
 
-            if auto_align:
-
-                morph = CLAHE_HELPER.apply(morph)
-
-                morph = ImageUtils.adjust_gamma(
-                    morph, config.threshold_params.GAMMA_LOW
-                )
-
-                _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
-                morph = ImageUtils.normalize_util(morph)
-
             omr_response = {}
 
             if auto_align:
-
-                v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
-                morph_v = cv2.morphologyEx(
-                    morph, cv2.MORPH_OPEN, v_kernel, iterations=3
-                )
-                _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
-                morph_v = 255 - ImageUtils.normalize_util(morph_v)
-
-                morph_thr = 60
-                _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
-
-                morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
-
-                for field_block in template.field_blocks:
-                    s, d = field_block.origin, field_block.dimensions
-
-                    match_col, max_steps, align_stride, thk = map(
-                        config.alignment_params.get,
-                        [
-                            "match_col",
-                            "max_steps",
-                            "stride",
-                            "thickness",
-                        ],
-                    )
-                    shift, steps = 0, 0
-                    while steps < max_steps:
-                        left_mean = np.mean(
-                            morph_v[
-                                s[1] : s[1] + d[1],
-                                s[0] + shift - thk : -thk + s[0] + shift + match_col,
-                            ]
-                        )
-                        right_mean = np.mean(
-                            morph_v[
-                                s[1] : s[1] + d[1],
-                                s[0]
-                                + shift
-                                - match_col
-                                + d[0]
-                                + thk : thk
-                                + s[0]
-                                + shift
-                                + d[0],
-                            ]
-                        )
-
-                        left_shift, right_shift = left_mean > 100, right_mean > 100
-                        if left_shift:
-                            if right_shift:
-                                break
-                            else:
-                                shift -= align_stride
-                        else:
-                            if right_shift:
-                                shift += align_stride
-                            else:
-                                break
-                        steps += 1
-
-                    field_block.shift = shift
+                template.field_blocks = self.apply_auto_align(config, template, morph)
 
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
             total_q_strip_no = 0
