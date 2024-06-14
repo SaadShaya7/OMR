@@ -31,8 +31,6 @@ class CropOnMarkers(ImagePreprocessor):
         return [self.marker_path]
 
     def apply_filter(self, image, file_path):
-        config = self.tuning_config
-        image_instance_ops = self.image_instance_ops
         image_eroded_sub = ImageUtils.normalize_util(
             image
             if self.apply_erode_subtract
@@ -100,13 +98,6 @@ class CropOnMarkers(ImagePreprocessor):
         logger.info(f"Optimal Scale: {best_scale}")
         self.threshold_circles.append(sum_t / 4)
         image = ImageUtils.four_point_transform(image, np.array(centres))
-        # image_instance_ops.append_save_img(2, image_eroded_sub)
-        if config.outputs.show_image_level >= 2 and config.outputs.show_image_level < 4:
-            image_eroded_sub = ImageUtils.resize_util_h(
-                image_eroded_sub, image.shape[0]
-            )
-            image_eroded_sub[:, -5:] = 0
-            h_stack = np.hstack((image_eroded_sub, image))
 
         return image
 
@@ -133,7 +124,6 @@ class CropOnMarkers(ImagePreprocessor):
         return marker
 
     def getBestMatch(self, image_eroded_sub):
-        config = self.tuning_config
         descent_per_step = (
             self.marker_rescale_range[1] - self.marker_rescale_range[0]
         ) // self.marker_rescale_steps

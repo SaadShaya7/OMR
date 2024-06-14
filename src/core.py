@@ -90,31 +90,12 @@ class ImageInstanceOps:
 
                     if is_bubble_marked:
                         detected_bubbles.append(bubble)
-                        x = bubble.x + field_block.shift
-                        y = bubble.y
-
-                        if field_block.correct_answers is None:
-                            color = (0, 0, 255)
-                        elif (
-                            field_block.correct_answers[question_index]
-                            == bubble.field_value
-                        ):
-                            color = (0, 255, 0)
-                        else:
-                            color = (255, 0, 0)
-
-                        cv2.rectangle(
+                        self.mark_bubble(
+                            bubble,
+                            field_block,
                             final_marked,
-                            (
-                                int(x + bubble_width / 12),
-                                int(y + bubble_height / 12),
-                            ),
-                            (
-                                int(x + bubble_width - bubble_width / 12),
-                                int(y + bubble_height - bubble_height / 12),
-                            ),
-                            color,
-                            2,
+                            bubble_width,
+                            bubble_height,
                         )
 
                 for bubble in detected_bubbles:
@@ -176,6 +157,38 @@ class ImageInstanceOps:
             self.calculate_standard_deviation(strip_values)
         )
         return strip_values
+
+    def mark_bubble(
+        self,
+        bubble,
+        field_block,
+        final_marked,
+        bubble_width,
+        bubble_height,
+    ):
+        x = bubble.x + field_block.shift
+        y = bubble.y
+
+        if field_block.correct_answers is None:
+            color = (0, 0, 255)
+        elif field_block.correct_answers[bubble.field_label] == bubble.field_value:
+            color = (0, 255, 0)
+        else:
+            color = (255, 0, 0)
+
+        cv2.rectangle(
+            final_marked,
+            (
+                int(x + bubble_width / 12),
+                int(y + bubble_height / 12),
+            ),
+            (
+                int(x + bubble_width - bubble_width / 12),
+                int(y + bubble_height - bubble_height / 12),
+            ),
+            color,
+            2,
+        )
 
     def read_omr_response(self, template, image):
         config = self.tuning_config
