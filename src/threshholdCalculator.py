@@ -62,7 +62,7 @@ class ThresholdCalculator:
             threshold1 + max_jump1 // 2,
         )
 
-        return global_threshold, lower_bound, upper_bound
+        return global_threshold
 
     def get_local_threshold(self, q_values, global_threshold, no_outliers):
         """
