@@ -1,5 +1,5 @@
 # OMR Checker
-This Repo is a fork of the original [https://github.com/Udayraj123/OMRChecker](OMRChecker), Refactored to follow best practices, and modified to work as flask API.
+This Repo is a fork of the original [OMRChecker](https://github.com/Udayraj123/OMRChecker), Refactored to follow best practices, and modified to work as flask API.
 
 Read OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳.
 
