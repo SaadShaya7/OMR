@@ -8,7 +8,7 @@ class ThresholdCalculator:
         self.tuning_config = tuning_config
 
     def _calculate_threshold(
-        self, sorted_values, looseness, default_threshold, min_jump, jump_delta
+        self, sorted_values, looseness, default_threshold, min_jump
     ):
         """
         Calculate the threshold based on the sorted values, looseness, and minimum jump.
@@ -45,10 +45,10 @@ class ThresholdCalculator:
 
         # Calculate the first and second thresholds
         max_jump1, threshold1 = self._calculate_threshold(
-            sorted_values, looseness, global_default_threshold, MIN_JUMP, JUMP_DELTA
+            sorted_values, looseness, global_default_threshold, MIN_JUMP
         )
         max_jump2, threshold2 = self._calculate_threshold(
-            sorted_values, looseness, global_default_threshold, MIN_JUMP, JUMP_DELTA
+            sorted_values, looseness, global_default_threshold, MIN_JUMP
         )
 
         # If the second threshold is larger and sufficiently different from the first, update the first threshold
@@ -56,11 +56,7 @@ class ThresholdCalculator:
             max_jump1, threshold1 = max_jump2, threshold2
 
         # Calculate the global threshold and the lower and upper bounds
-        global_threshold, lower_bound, upper_bound = (
-            threshold1,
-            threshold1 - max_jump1 // 2,
-            threshold1 + max_jump1 // 2,
-        )
+        global_threshold = threshold1
 
         return global_threshold
 

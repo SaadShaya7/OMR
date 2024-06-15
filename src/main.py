@@ -50,19 +50,29 @@ def process_image():
 
         # Process the image using the template
         logging.info("Processing the image using the template")
-        ndArrayResponse, omr_response = entry_point(temp_image_path, temp_template_path)
-        processed_image = Image.fromarray(ndArrayResponse)
+        final_marked_array, omr_response, cropped_name_array = entry_point(
+            temp_image_path, temp_template_path
+        )
+        processed_image = Image.fromarray(final_marked_array)
+        cropped_name_image = Image.fromarray(cropped_name_array)
+
         buffer = io.BytesIO()
+
         processed_image.save(buffer, format="JPEG")
+        buffer.seek(0)
         image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-        # Return the base64 encoded image as part of the JSON response
+        cropped_name_image.save(buffer, format="JPEG")
+        buffer.seek(0)
+        cropped_name_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
         logging.info("Image processed successfully")
+
         return (
             jsonify(
                 {
                     "detectedMarks": omr_response,
                     "markedImage": image_base64,
+                    "studentName": cropped_name_base64,
                 }
             ),
             200,

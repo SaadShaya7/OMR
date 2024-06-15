@@ -41,13 +41,13 @@ def process_image(image_path, template_path):
     if in_omr is None:
         raise Exception(f"Failure after applying processors")
 
-    (response_dict, final_marked) = template.image_instance_ops.read_omr_response(
-        template, image=in_omr
+    (response_dict, final_marked, cropped_name) = (
+        template.image_instance_ops.read_omr_response(template, image=in_omr)
     )
 
     omr_response = get_concatenated_response(response_dict, template)
 
-    return final_marked, omr_response
+    return final_marked, omr_response, cropped_name
 
 
 def show_template_layouts(file_path, template, tuning_config):

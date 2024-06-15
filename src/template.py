@@ -252,7 +252,6 @@ class FieldBlock:
             f"Field Block Labels: {self.name}", field_labels
         )
 
-        print(correct_answers)
         self.origin = origin
         self.bubble_dimensions = bubble_dimensions
         self.correct_answers = correct_answers

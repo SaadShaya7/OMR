@@ -96,6 +96,7 @@ class ImageInstanceOps:
                             final_marked,
                             bubble_width,
                             bubble_height,
+                            question_index,
                         )
 
                 for bubble in detected_bubbles:
@@ -165,13 +166,14 @@ class ImageInstanceOps:
         final_marked,
         bubble_width,
         bubble_height,
+        question_index,
     ):
         x = bubble.x + field_block.shift
         y = bubble.y
 
-        if field_block.correct_answers is None:
+        if field_block.correct_answers == None:
             color = (0, 0, 255)
-        elif field_block.correct_answers[bubble.field_label] == bubble.field_value:
+        elif field_block.correct_answers[question_index] == bubble.field_value:
             color = (0, 255, 0)
         else:
             color = (255, 0, 0)
@@ -189,6 +191,15 @@ class ImageInstanceOps:
             color,
             2,
         )
+
+    def crop_name(self, original_image):
+        origin = (275, 114)  # x, y
+        width = 248
+        height = 53
+        end_point = (origin[0] + width, origin[1] + height)
+        cropped = original_image[origin[1] : end_point[1], origin[0] : end_point[0]]
+        cv2.rectangle(original_image, origin, end_point, (0, 0, 255), 2)
+        return cropped
 
     def read_omr_response(self, template, image):
         config = self.tuning_config
@@ -229,7 +240,7 @@ class ImageInstanceOps:
                 f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
             )
 
-            return self.process_field_blocks(
+            omr_response, final_marked = self.process_field_blocks(
                 final_marked,
                 template,
                 all_mean_values,
@@ -239,6 +250,9 @@ class ImageInstanceOps:
                 threshhold_calculator,
                 all_standard_deviation_values,
             )
+            cropped_name = self.crop_name(final_marked)
+
+            return omr_response, final_marked, cropped_name
 
         except Exception as e:
             raise e
