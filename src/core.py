@@ -102,7 +102,10 @@ class ImageInstanceOps:
                 for bubble in detected_bubbles:
                     field_label = bubble.field_label
                     field_value = bubble.field_value
-                    omr_response[field_label] = field_value
+                    multi_marked_local = field_label in omr_response
+                    omr_response[field_label] = (
+                        None if multi_marked_local else field_value
+                    )
 
                 if len(detected_bubbles) == 0:
                     field_label = bubble_group[0].field_label
