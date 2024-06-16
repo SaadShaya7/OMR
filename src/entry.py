@@ -7,14 +7,11 @@
 
 """
 
-import os
-from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 import cv2
 from defaults import CONFIG_DEFAULTS
 from utils.interaction import InteractionUtils
 from template import Template
-from utils.parsing import get_concatenated_response
 
 
 def entry_point(image_path, template_path):
@@ -41,11 +38,9 @@ def process_image(image_path, template_path):
     if in_omr is None:
         raise Exception(f"Failure after applying processors")
 
-    (response_dict, final_marked, cropped_name) = (
+    (omr_response, final_marked, cropped_name) = (
         template.image_instance_ops.read_omr_response(template, image=in_omr)
     )
-
-    omr_response = get_concatenated_response(response_dict, template)
 
     return final_marked, omr_response, cropped_name
 

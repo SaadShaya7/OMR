@@ -3,14 +3,11 @@ from copy import deepcopy
 from fractions import Fraction
 
 from deepmerge import Merger
-from dotmap import DotMap
 
-from constants import FIELD_LABEL_NUMBER_REGEX
-from defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
+from defaults import TEMPLATE_DEFAULTS
 from schemas.constants import FIELD_STRING_REGEX_GROUPS
 from utils.file import load_json
 from utils.validations import (
-    validate_config_json,
     validate_evaluation_json,
     validate_template_json,
 )
@@ -30,19 +27,6 @@ OVERRIDE_MERGER = Merger(
     # the case where the types conflict:
     ["override"],
 )
-
-
-def get_concatenated_response(omr_response, template):
-    # Multi-column/multi-row questions which need to be concatenated
-    concatenated_response = {}
-    for field_label, concatenate_keys in template.custom_labels.items():
-        custom_label = "".join([omr_response[k] for k in concatenate_keys])
-        concatenated_response[field_label] = custom_label
-
-    for field_label in template.non_custom_labels:
-        concatenated_response[field_label] = omr_response[field_label]
-
-    return concatenated_response
 
 
 def open_template_with_defaults(template_path):
@@ -88,11 +72,6 @@ def parse_field_string(field_string):
         ]
     else:
         return [field_string]
-
-
-def custom_sort_output_columns(field_label):
-    label_prefix, label_suffix = re.findall(FIELD_LABEL_NUMBER_REGEX, field_label)[0]
-    return [label_prefix, int(label_suffix) if len(label_suffix) > 0 else 0]
 
 
 def parse_float_or_fraction(result):

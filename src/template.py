@@ -13,7 +13,6 @@ from core import ImageInstanceOps
 from logger import logger
 from processors.manager import PROCESSOR_MANAGER
 from utils.parsing import (
-    custom_sort_output_columns,
     open_template_with_defaults,
     parse_fields,
 )
@@ -31,37 +30,18 @@ class Template:
         self.global_empty_val = None
 
         (
-            custom_labels_object,
             field_blocks_object,
-            output_columns_array,
             self.options,
         ) = map(
             json_object.get,
             [
-                "customLabels",
                 "fieldBlocks",
-                "outputColumns",
                 "options",
             ],
         )
 
-        self.parse_output_columns(output_columns_array)
         self.setup_pre_processors()
         self.setup_field_blocks(field_blocks_object)
-        self.parse_custom_labels(custom_labels_object)
-
-        non_custom_columns, all_custom_columns = (
-            list(self.non_custom_labels),
-            list(custom_labels_object.keys()),  #
-        )
-        # t
-        if len(self.output_columns) == 0:
-            self.fill_output_columns(non_custom_columns, all_custom_columns)
-
-        self.validate_template_columns(non_custom_columns, all_custom_columns)
-
-    def parse_output_columns(self, output_columns_array):
-        self.output_columns = parse_fields(f"Output Columns", output_columns_array)
 
     def setup_pre_processors(self):
         # Define the path to the marker image in the constants directory
@@ -87,71 +67,6 @@ class Template:
         self.all_parsed_labels = set()
         for block_name, field_block_object in field_blocks_object.items():
             self.parse_and_add_field_block(block_name, field_block_object)
-
-    def parse_custom_labels(self, custom_labels_object):
-        all_parsed_custom_labels = set()
-        self.custom_labels = {}
-        for custom_label, label_strings in custom_labels_object.items():
-            parsed_labels = parse_fields(f"Custom Label: {custom_label}", label_strings)
-            parsed_labels_set = set(parsed_labels)
-            self.custom_labels[custom_label] = parsed_labels
-
-            missing_custom_labels = sorted(
-                parsed_labels_set.difference(self.all_parsed_labels)
-            )
-            if len(missing_custom_labels) > 0:
-                logger.critical(
-                    f"For '{custom_label}', Missing labels - {missing_custom_labels}"
-                )
-                raise Exception(
-                    f"Missing field block label(s) in the given template for {missing_custom_labels} from '{custom_label}'"
-                )
-
-            if not all_parsed_custom_labels.isdisjoint(parsed_labels_set):
-                # Note: this can be made a warning, but it's a choice
-                logger.critical(
-                    f"field strings overlap for labels: {label_strings} and existing custom labels: {all_parsed_custom_labels}"
-                )
-                raise Exception(
-                    f"The field strings for custom label '{custom_label}' overlap with other existing custom labels"
-                )
-
-            all_parsed_custom_labels.update(parsed_labels)
-
-        self.non_custom_labels = self.all_parsed_labels.difference(
-            all_parsed_custom_labels
-        )
-
-    def fill_output_columns(self, non_custom_columns, all_custom_columns):
-        all_template_columns = non_custom_columns + all_custom_columns
-        # Typical case: sort alpha-numerical (natural sort)
-        self.output_columns = sorted(
-            all_template_columns, key=custom_sort_output_columns
-        )
-
-    def validate_template_columns(self, non_custom_columns, all_custom_columns):
-        output_columns_set = set(self.output_columns)
-        all_custom_columns_set = set(all_custom_columns)
-
-        missing_output_columns = sorted(
-            output_columns_set.difference(all_custom_columns_set).difference(
-                self.all_parsed_labels
-            )
-        )
-        if len(missing_output_columns) > 0:
-            logger.critical(f"Missing output columns: {missing_output_columns}")
-            raise Exception(
-                f"Some columns are missing in the field blocks for the given output columns"
-            )
-
-        all_template_columns_set = set(non_custom_columns + all_custom_columns)
-        missing_label_columns = sorted(
-            all_template_columns_set.difference(output_columns_set)
-        )
-        if len(missing_label_columns) > 0:
-            logger.warning(
-                f"Some label columns are not covered in the given output columns: {missing_label_columns}"
-            )
 
     def parse_and_add_field_block(self, block_name, field_block_object):
         field_block_object = self.pre_fill_field_block(field_block_object)

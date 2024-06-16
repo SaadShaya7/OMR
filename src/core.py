@@ -138,10 +138,6 @@ class ImageInstanceOps:
             for bubble_point in bubble_group
         ]
 
-    def calculate_standard_deviation(self, strip_values):
-        """Calculate the standard deviation of the strip values and round to 2 decimal places."""
-        return round(np.std(strip_values), 2)
-
     def process_bubble_group(
         self,
         img,
@@ -157,9 +153,7 @@ class ImageInstanceOps:
             img, bubble_group, field_block, bubble_width, bubble_height
         )
         all_mean_values.extend(strip_values)
-        all_standard_deviation_values.append(
-            self.calculate_standard_deviation(strip_values)
-        )
+        all_standard_deviation_values.append(round(np.std(strip_values), 2))
         return strip_values
 
     def mark_bubble(
@@ -196,7 +190,7 @@ class ImageInstanceOps:
         )
 
     def crop_name(self, original_image):
-        origin = (275, 114)  # x, y
+        origin = (275, 114)
         width = 248
         height = 53
         end_point = (origin[0] + width, origin[1] + height)
