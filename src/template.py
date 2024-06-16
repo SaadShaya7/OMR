@@ -1,12 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 import os
 from constants import FIELD_TYPES
 from core import ImageInstanceOps

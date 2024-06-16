@@ -60,6 +60,7 @@ class ImageInstanceOps:
         omr_threshold_avg = 0
         total_strip_count = 0
         total_box_count = 0
+        multi_marked_fields = []
 
         final_marked = cv2.cvtColor(final_marked, cv2.COLOR_GRAY2BGR)
 
@@ -106,6 +107,8 @@ class ImageInstanceOps:
                     omr_response[field_label] = (
                         None if multi_marked_local else field_value
                     )
+                    if multi_marked_local and field_label not in multi_marked_fields:
+                        multi_marked_fields.append(field_label)
 
                 if len(detected_bubbles) == 0:
                     field_label = bubble_group[0].field_label
@@ -119,7 +122,8 @@ class ImageInstanceOps:
         omr_threshold_avg = round(omr_threshold_avg, 2)
 
         final_marked = cv2.flip(final_marked, 2)
-        return (omr_response, final_marked)
+        multi_marked_count = len(multi_marked_fields)
+        return (omr_response, final_marked, multi_marked_count)
 
     def calculate_mean_values(
         self, img, bubble_group, field_block, bubble_width, bubble_height
@@ -234,10 +238,10 @@ class ImageInstanceOps:
             )
 
             logger.info(
-                f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
+                f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}"
             )
 
-            omr_response, final_marked = self.process_field_blocks(
+            omr_response, final_marked, multi_marked_count = self.process_field_blocks(
                 final_marked,
                 template,
                 all_mean_values,
@@ -249,7 +253,7 @@ class ImageInstanceOps:
             )
             cropped_name = self.crop_name(final_marked)
 
-            return omr_response, final_marked, cropped_name
+            return omr_response, final_marked, cropped_name, multi_marked_count
 
         except Exception as e:
             raise e

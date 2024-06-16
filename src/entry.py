@@ -1,12 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 from pathlib import Path
 import cv2
 from defaults import CONFIG_DEFAULTS
@@ -15,10 +6,6 @@ from template import Template
 
 
 def entry_point(image_path, template_path):
-    return process_image(image_path, template_path)
-
-
-def process_image(image_path, template_path):
     tuning_config = CONFIG_DEFAULTS
 
     # Load template
@@ -38,11 +25,11 @@ def process_image(image_path, template_path):
     if in_omr is None:
         raise Exception(f"Failure after applying processors")
 
-    (omr_response, final_marked, cropped_name) = (
+    (omr_response, final_marked, cropped_name, multi_marked_count) = (
         template.image_instance_ops.read_omr_response(template, image=in_omr)
     )
 
-    return final_marked, omr_response, cropped_name
+    return final_marked, omr_response, cropped_name, multi_marked_count
 
 
 def show_template_layouts(file_path, template, tuning_config):

@@ -50,8 +50,8 @@ def process_image():
 
         # Process the image using the template
         logging.info("Processing the image using the template")
-        final_marked_array, omr_response, cropped_name_array = entry_point(
-            temp_image_path, temp_template_path
+        final_marked_array, omr_response, cropped_name_array, multi_marked_count = (
+            entry_point(temp_image_path, temp_template_path)
         )
         processed_image = Image.fromarray(final_marked_array)
         cropped_name_image = Image.fromarray(cropped_name_array)
@@ -71,6 +71,7 @@ def process_image():
             jsonify(
                 {
                     "detectedMarks": omr_response,
+                    "multiMarkedCount": multi_marked_count,
                     "markedImage": image_base64,
                     "studentName": cropped_name_base64,
                 }
