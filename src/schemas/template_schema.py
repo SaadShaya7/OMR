@@ -14,11 +14,11 @@ two_positive_integers = {
 }
 positive_integers = {
     "type": "array",
-    "items": {"type": "integer", "minimum": 1},
-    "minItems": 1,
+    "items": {"type": "integer", "minimum": 0},
+    "minItems": 0,
 }
 two_positive_numbers = {
-    "type": "array",    
+    "type": "array",
     "prefixItems": [
         positive_number,
         positive_number,
