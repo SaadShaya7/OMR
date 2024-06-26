@@ -20,11 +20,11 @@ FIELD_TYPES = {
         "bubbleValues": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
         "direction": "vertical",
     },
-    "TRUEFALSE": {"bubbleValues": [2, 1], "direction": "horizontal"},
-    "QTYPE_MCQ3": {"bubbleValues": [1, 2, 3], "direction": "horizontal"},
-    "QTYPE_MCQ4": {"bubbleValues": [1, 2, 3, 4], "direction": "horizontal"},
+    "TRUEFALSE": {"bubbleValues": [0, 1], "direction": "horizontal"},
+    "QTYPE_MCQ3": {"bubbleValues": [0, 1, 2], "direction": "horizontal"},
+    "QTYPE_MCQ4": {"bubbleValues": [0, 1, 2, 3], "direction": "horizontal"},
     "FORM": {
-        "bubbleValues": ["A", "B", "C", "D"],
+        "bubbleValues": [0, 1, 2, 3],
         "direction": "vertical",
     },
     #

@@ -18,7 +18,7 @@ positive_integers = {
     "minItems": 1,
 }
 two_positive_numbers = {
-    "type": "array",
+    "type": "array",    
     "prefixItems": [
         positive_number,
         positive_number,
@@ -79,7 +79,6 @@ TEMPLATE_SCHEMA = {
                             "CropPage",
                             "FeatureBasedAlignment",
                             "GaussianBlur",
-                            "Levels",
                             "MedianBlur",
                         ],
                     },
@@ -123,22 +122,6 @@ TEMPLATE_SCHEMA = {
                                         "reference": {"type": "string"},
                                     },
                                     "required": ["reference"],
-                                }
-                            }
-                        },
-                    },
-                    {
-                        "if": {"properties": {"name": {"const": "Levels"}}},
-                        "then": {
-                            "properties": {
-                                "options": {
-                                    "type": "object",
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "gamma": zero_to_one_number,
-                                        "high": zero_to_one_number,
-                                        "low": zero_to_one_number,
-                                    },
                                 }
                             }
                         },
