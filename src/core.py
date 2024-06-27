@@ -196,7 +196,7 @@ class ImageInstanceOps:
     def crop_name(self, original_image):
         origin = (275, 114)
         width = 248
-        height = 53
+        height = 60
         end_point = (origin[0] + width, origin[1] + height)
         cropped = original_image[origin[1] : end_point[1], origin[0] : end_point[0]]
         cv2.rectangle(original_image, origin, end_point, (0, 0, 255), 2)
