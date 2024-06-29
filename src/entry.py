@@ -1,11 +1,17 @@
 from pathlib import Path
 import cv2
 from defaults import CONFIG_DEFAULTS
+from utils.image import ImageUtils
 from utils.interaction import InteractionUtils
 from template import Template
+from pyzbar.pyzbar import decode
 
 
-def entry_point(image_path, template_path):
+class WrongSampleException(Exception):
+    pass
+
+
+def entry_point(image_path, template_path, sample_id):
     tuning_config = CONFIG_DEFAULTS
 
     # Load template
@@ -24,6 +30,9 @@ def entry_point(image_path, template_path):
 
     if in_omr is None:
         raise Exception(f"Failure after applying processors")
+
+    if not sample_id == read_sample_id(in_omr, template):
+        raise WrongSampleException("Wrong sample ")
 
     (omr_response, final_marked, cropped_name, multi_marked_count) = (
         template.image_instance_ops.read_omr_response(template, image=in_omr)
@@ -44,3 +53,24 @@ def show_template_layouts(file_path, template, tuning_config):
     InteractionUtils.show(
         f"Template Layout", template_layout, 1, 1, config=tuning_config
     )
+
+
+def read_sample_id(original_image, template) -> str:
+
+    original_image = ImageUtils.resize_util(
+        original_image, template.page_dimensions[0], template.page_dimensions[1]
+    )
+    if original_image.max() > original_image.min():
+        original_image = ImageUtils.normalize_util(original_image)
+
+    origin = (20, 675)
+    width = 80
+    height = 80
+    end_point = (origin[0] + width, origin[1] + height)
+    cropped = original_image[origin[1] : end_point[1], origin[0] : end_point[0]]
+
+    decoded = next(iter(decode(cropped)), None)
+    if decoded == None:
+        return None
+
+    return decoded.data.decode("utf-8")

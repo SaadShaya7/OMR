@@ -6,7 +6,7 @@ import tempfile
 import logging
 from flask import Flask, request, jsonify
 from PIL import Image
-from entry import entry_point
+from entry import entry_point, WrongSampleException
 
 app = Flask(__name__)
 
@@ -19,17 +19,18 @@ def process_image():
     logging.info("Received a request to process an image")
     image_file = request.files.get("image")
     template_str = request.form.get("template")
+    sample_id = request.form.get("sampleId")
 
     if not image_file or not template_str:
         logging.error("Image and template are required")
-        return jsonify({"error": "Image and template are required"}), 400
+        return jsonify({"errorMessage": "Image and template are required"}), 400
 
     try:
         logging.info("Parsing the template JSON")
         template = json.loads(template_str)
     except json.JSONDecodeError:
         logging.error("Invalid JSON template")
-        return jsonify({"error": "Invalid JSON template"}), 400
+        return jsonify({"errorMessage": "Invalid JSON template"}), 400
 
     temp_image_path = None
     temp_template_path = None
@@ -50,9 +51,19 @@ def process_image():
 
         # Process the image using the template
         logging.info("Processing the image using the template")
-        final_marked_array, omr_response, cropped_name_array, multi_marked_count = (
-            entry_point(temp_image_path, temp_template_path)
-        )
+
+        try:
+            final_marked_array, omr_response, cropped_name_array, multi_marked_count = (
+                entry_point(temp_image_path, temp_template_path, sample_id)
+            )
+        except WrongSampleException:
+            return (
+                jsonify(
+                    {"errorMessage": "الرجاء محاذاة الورقة والتأكد من صحة النموذج"}
+                ),
+                400,
+            )
+
         processed_image = Image.fromarray(final_marked_array)
         cropped_name_image = Image.fromarray(cropped_name_array)
 
@@ -81,7 +92,7 @@ def process_image():
 
     except Exception as e:
         logging.error("An error occurred: %s", e, exc_info=True)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"errorMessage": str(e)}), 500
 
     finally:
         # Clean up temporary files
