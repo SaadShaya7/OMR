@@ -1,10 +1,11 @@
 from pathlib import Path
 import cv2
+from pyzbar.pyzbar import decode
+
 from defaults import CONFIG_DEFAULTS
 from utils.image import ImageUtils
 from utils.interaction import InteractionUtils
 from template import Template
-from pyzbar.pyzbar import decode
 
 
 class WrongSampleException(Exception):
@@ -32,6 +33,7 @@ def entry_point(image_path, template_path, sample_id):
         raise Exception(f"Failure after applying processors")
 
     if not sample_id == read_sample_id(in_omr, template):
+
         raise WrongSampleException("Wrong sample ")
 
     (omr_response, final_marked, cropped_name, multi_marked_count) = (
@@ -63,14 +65,16 @@ def read_sample_id(original_image, template) -> str:
     if original_image.max() > original_image.min():
         original_image = ImageUtils.normalize_util(original_image)
 
-    origin = (20, 675)
-    width = 80
-    height = 80
+    origin = (0, 630)
+    width = 130
+    height = 130
     end_point = (origin[0] + width, origin[1] + height)
     cropped = original_image[origin[1] : end_point[1], origin[0] : end_point[0]]
 
     decoded = next(iter(decode(cropped)), None)
-    if decoded == None:
-        return None
 
-    return decoded.data.decode("utf-8")
+    data = None if decoded == None else decoded.data.decode("utf-8")
+
+    print(data)
+
+    return data

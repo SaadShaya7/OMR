@@ -27,23 +27,20 @@ class ThresholdCalculator:
         """
         Calculate the global threshold based on the original values and looseness.
         """
-        # Get the threshold parameters from the tuning configuration
+
         PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
             self.tuning_config.threshold_params.get,
             ["PAGE_TYPE_FOR_THRESHOLD", "MIN_JUMP", "JUMP_DELTA"],
         )
 
-        # Set the default global threshold based on the page type
         global_default_threshold = (
             constants.GLOBAL_PAGE_THRESHOLD_WHITE
             if PAGE_TYPE_FOR_THRESHOLD == "white"
             else constants.GLOBAL_PAGE_THRESHOLD_BLACK
         )
 
-        # Sort the original values
         sorted_values = sorted(original_values)
 
-        # Calculate the first and second thresholds
         max_jump1, threshold1 = self._calculate_threshold(
             sorted_values, looseness, global_default_threshold, MIN_JUMP
         )
@@ -51,11 +48,9 @@ class ThresholdCalculator:
             sorted_values, looseness, global_default_threshold, MIN_JUMP
         )
 
-        # If the second threshold is larger and sufficiently different from the first, update the first threshold
         if max_jump2 > max_jump1 and abs(threshold1 - threshold2) > JUMP_DELTA:
             max_jump1, threshold1 = max_jump2, threshold2
 
-        # Calculate the global threshold and the lower and upper bounds
         global_threshold = threshold1
 
         return global_threshold
@@ -69,10 +64,8 @@ class ThresholdCalculator:
         config = self.tuning_config
         threshold_params = config.threshold_params
 
-        # Sort the q_values for further calculations
         q_values = sorted(q_values)
 
-        # If there are less than 3 q_values, calculate the threshold based on the max and min gap
         if len(q_values) < 3:
             threshold = (
                 global_threshold
@@ -80,17 +73,15 @@ class ThresholdCalculator:
                 else np.mean(q_values)
             )
         else:
-            # Initialize maximum jump and threshold
+
             max_jump, threshold = threshold_params.MIN_JUMP, 255
 
-            # Calculate the maximum jump and corresponding threshold
             for i in range(1, len(q_values) - 1):
                 current_jump = q_values[i + 1] - q_values[i - 1]
                 if current_jump > max_jump:
                     max_jump = current_jump
                     threshold = q_values[i - 1] + current_jump / 2
 
-            # Check if the maximum jump is less than the confident jump
             confident_jump = (
                 threshold_params.MIN_JUMP + threshold_params.CONFIDENT_SURPLUS
             )
