@@ -26,7 +26,12 @@ Note: For solving interesting challenges, developers can check out [**TODOs**](h
 
 See the complete guide and details at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
-<!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
+
+## Fork reconstruction
+Removed unused code and reconstructed the algorithm as flask api as follows
+
+![New architecture](architecture.png)
+
 
 ## 💡 What can OMRChecker do for me?
 

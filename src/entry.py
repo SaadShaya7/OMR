@@ -2,6 +2,7 @@ from pathlib import Path
 import cv2
 from pyzbar.pyzbar import decode
 
+from core import ImageInstanceOps
 from utils.image import ImageUtils
 from template import Template
 
@@ -13,13 +14,14 @@ class WrongSampleException(Exception):
 def entry_point(image_path, template_path, sample_id):
 
     template = Template(Path(template_path))
+    image_instance_ops = ImageInstanceOps()
 
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
 
     if in_omr is None:
         raise Exception(f"Could not read the provided image")
 
-    in_omr = template.image_instance_ops.apply_preprocessors(image_path, in_omr)
+    in_omr = image_instance_ops.apply_preprocessors(image_path, in_omr)
 
     if in_omr is None:
         raise Exception(f"Failure after applying processors")
@@ -29,7 +31,7 @@ def entry_point(image_path, template_path, sample_id):
         raise WrongSampleException("Wrong sample ")
 
     (omr_response, final_marked, cropped_name, multi_marked_count) = (
-        template.image_instance_ops.read_omr_response(template, image=in_omr)
+        image_instance_ops.read_omr_response(template, image=in_omr)
     )
 
     return final_marked, omr_response, cropped_name, multi_marked_count

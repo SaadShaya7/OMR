@@ -1,5 +1,4 @@
 
-from core import ImageInstanceOps
 from logger import logger
 from utils.parsing import (
     open_template_with_defaults,
@@ -27,7 +26,6 @@ FIELD_TYPES = {
 class Template:
     def __init__(self, template_path):
         self.path = template_path
-        self.image_instance_ops = ImageInstanceOps()
 
         json_object = open_template_with_defaults(template_path)
 
