@@ -1,4 +1,4 @@
-from constants import FIELD_TYPES
+
 from core import ImageInstanceOps
 from logger import logger
 from utils.parsing import (
@@ -6,11 +6,28 @@ from utils.parsing import (
     parse_fields,
 )
 
+FIELD_TYPES = {
+    "QTYPE_INT": {
+        "bubbleValues": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        "direction": "vertical",
+    },
+    "TRUEFALSE": {"bubbleValues": [0, 1], "direction": "horizontal"},
+    "QTYPE_MCQ3": {"bubbleValues": [0, 1, 2], "direction": "horizontal"},
+    "QTYPE_MCQ4": {"bubbleValues": [0, 1, 2, 3], "direction": "horizontal"},
+    "FORM": {
+        "bubbleValues": [0, 1, 2, 3],
+        "direction": "vertical",
+    },
+    #
+    # You can create and append custom field types here-
+    #
+}
+
 
 class Template:
-    def __init__(self, template_path, tuning_config):
+    def __init__(self, template_path):
         self.path = template_path
-        self.image_instance_ops = ImageInstanceOps(tuning_config)
+        self.image_instance_ops = ImageInstanceOps()
 
         json_object = open_template_with_defaults(template_path)
 

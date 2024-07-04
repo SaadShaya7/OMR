@@ -2,7 +2,6 @@ from pathlib import Path
 import cv2
 from pyzbar.pyzbar import decode
 
-from defaults import CONFIG_DEFAULTS
 from utils.image import ImageUtils
 from template import Template
 
@@ -12,14 +11,10 @@ class WrongSampleException(Exception):
 
 
 def entry_point(image_path, template_path, sample_id):
-    tuning_config = CONFIG_DEFAULTS
 
-    # Load template
-    template = Template(Path(template_path), tuning_config)
+    template = Template(Path(template_path))
 
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-
-    # show_template_layouts(str(image_path), template, tuning_config)
 
     if in_omr is None:
         raise Exception(f"Could not read the provided image")

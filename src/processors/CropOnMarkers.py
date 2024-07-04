@@ -1,36 +1,34 @@
 import os
-
 import cv2
 import numpy as np
-
 from logger import logger
 from defaults.config import CONFIG_DEFAULTS
 from utils.image import ImageUtils
-from utils.interaction import InteractionUtils
 
 
 class CropOnMarkers:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tuning_config = CONFIG_DEFAULTS
-        marker_ops = {
-            "relativePath": "../constants/marker_image.jpg",
-            "sheetToMarkerWidthRatio": 21,
-        }
-        self.threshold_circles = []
-        # img_utils = ImageUtils()
+    def __init__(self, marker_ops=None):
+        if marker_ops is None:
+            marker_ops = {
+                "relativePath": "../constants/marker_image.jpg",
+                "sheetToMarkerWidthRatio": 21,
+                "min_matching_threshold": 0.3,
+                "max_matching_variation": 0.41,
+                "marker_rescale_range": (35, 100),
+                "marker_rescale_steps": 10,
+                "apply_erode_subtract": True,
+            }
 
-        # options with defaults
+        self.tuning_config = CONFIG_DEFAULTS
         self.marker_path = os.path.join(
-            os.path.dirname(__file__), marker_ops.get("relativePath", "omr_marker.jpg")
+            os.path.dirname(__file__), marker_ops["relativePath"]
         )
-        self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
-        self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
-        self.marker_rescale_range = tuple(
-            int(r) for r in marker_ops.get("marker_rescale_range", (35, 100))
-        )
-        self.marker_rescale_steps = int(marker_ops.get("marker_rescale_steps", 10))
-        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", True)
+        self.min_matching_threshold = marker_ops["min_matching_threshold"]
+        self.max_matching_variation = marker_ops["max_matching_variation"]
+        self.marker_rescale_range = tuple(marker_ops["marker_rescale_range"])
+        self.marker_rescale_steps = marker_ops["marker_rescale_steps"]
+        self.apply_erode_subtract = marker_ops["apply_erode_subtract"]
+        self.threshold_circles = []
         self.marker = self.load_marker(marker_ops, self.tuning_config)
 
     def __str__(self):
@@ -40,144 +38,43 @@ class CropOnMarkers:
         return [self.marker_path]
 
     def apply_filter(self, image, file_path):
-        config = self.tuning_config
-        image_eroded_sub = ImageUtils.normalize_util(
-            image
-            if self.apply_erode_subtract
-            else (image - cv2.erode(image, kernel=np.ones((5, 5)), iterations=5))
-        )
-        # Quads on warped image
-        quads = {}
-        h1, w1 = image_eroded_sub.shape[:2]
-        midh, midw = h1 // 3, w1 // 2
-        origins = [[0, 0], [midw, 0], [0, midh], [midw, midh]]
-        quads[0] = image_eroded_sub[0:midh, 0:midw]
-        quads[1] = image_eroded_sub[0:midh, midw:w1]
-        quads[2] = image_eroded_sub[midh:h1, 0:midw]
-        quads[3] = image_eroded_sub[midh:h1, midw:w1]
+        eroded_image = self._apply_erode_subtract(image)
+        quads, origins = self._divide_image_into_quadrants(eroded_image)
+        self._draw_dividers(eroded_image)
 
-        # Draw Quadlines
-        image_eroded_sub[:, midw : midw + 2] = 255
-        image_eroded_sub[midh : midh + 2, :] = 255
-
-        best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
+        best_scale, all_max_t = self._get_best_match(eroded_image)
         if best_scale is None:
-            if config.outputs.show_image_level >= 1:
-                InteractionUtils.show("Quads", image_eroded_sub, config=config)
             return None
 
         optimal_marker = ImageUtils.resize_util_h(
             self.marker, u_height=int(self.marker.shape[0] * best_scale)
         )
-        _h, w = optimal_marker.shape[:2]
-        centres = []
-        sum_t, max_t = 0, 0
-        quarter_match_log = "Matching Marker:  "
-        for k in range(0, 4):
-            res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
-            max_t = res.max()
-            quarter_match_log += f"Quarter{str(k + 1)}: {str(round(max_t, 3))}\t"
-            if (
-                max_t < self.min_matching_threshold
-                or abs(all_max_t - max_t) >= self.max_matching_variation
-            ):
-                logger.error(
-                    file_path,
-                    "\nError: No circle found in Quad",
-                    k + 1,
-                    "\n\t min_matching_threshold",
-                    self.min_matching_threshold,
-                    "\t max_matching_variation",
-                    self.max_matching_variation,
-                    "\t max_t",
-                    max_t,
-                    "\t all_max_t",
-                    all_max_t,
-                )
-                if config.outputs.show_image_level >= 1:
-                    InteractionUtils.show(
-                        f"No markers: {file_path}",
-                        image_eroded_sub,
-                        0,
-                        config=config,
-                    )
-                    InteractionUtils.show(
-                        f"res_Q{str(k + 1)} ({str(max_t)})",
-                        res,
-                        1,
-                        config=config,
-                    )
-                return None
+        centres, success = self._find_marker_centres(
+            quads, optimal_marker, origins, file_path, all_max_t, eroded_image
+        )
+        if not success:
+            return None
 
-            pt = np.argwhere(res == max_t)[0]
-            pt = [pt[1], pt[0]]
-            pt[0] += origins[k][0]
-            pt[1] += origins[k][1]
-            # print(">>",pt)
-            image = cv2.rectangle(
-                image, tuple(pt), (pt[0] + w, pt[1] + _h), (150, 150, 150), 2
-            )
-            # display:
-            image_eroded_sub = cv2.rectangle(
-                image_eroded_sub,
-                tuple(pt),
-                (pt[0] + w, pt[1] + _h),
-                (50, 50, 50) if self.apply_erode_subtract else (155, 155, 155),
-                4,
-            )
-            centres.append([pt[0] + w / 2, pt[1] + _h / 2])
-            sum_t += max_t
-
-        logger.info(quarter_match_log)
         logger.info(f"Optimal Scale: {best_scale}")
-        # analysis data
-        self.threshold_circles.append(sum_t / 4)
+        self.threshold_circles.append(sum(max_t for _, max_t in centres) / 4)
 
-        image = ImageUtils.four_point_transform(image, np.array(centres))
-        # appendSaveImg(1,image_eroded_sub)
-        # appendSaveImg(1,image_norm)
-
-        # Debugging image -
-        # res = cv2.matchTemplate(image_eroded_sub,optimal_marker,cv2.TM_CCOEFF_NORMED)
-        # res[ : , midw:midw+2] = 255
-        # res[ midh:midh+2, : ] = 255
-        # show("Markers Matching",res)
-        if config.outputs.show_image_level >= 2 and config.outputs.show_image_level < 4:
-            image_eroded_sub = ImageUtils.resize_util_h(
-                image_eroded_sub, image.shape[0]
-            )
-            image_eroded_sub[:, -5:] = 0
-            h_stack = np.hstack((image_eroded_sub, image))
-            InteractionUtils.show(
-                f"Warped: {file_path}",
-                ImageUtils.resize_util(
-                    h_stack, int(config.dimensions.display_width * 1.6)
-                ),
-                0,
-                0,
-                [0, 0],
-                config=config,
-            )
-        # iterations : Tuned to 2.
-        # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
-        return image
+        transformed_image = ImageUtils.four_point_transform(
+            image, np.array([pt for pt, _ in centres])
+        )
+        return transformed_image
 
     def load_marker(self, marker_ops, config):
         if not os.path.exists(self.marker_path):
             logger.error(
-                "Marker not found at path provided in template:",
-                self.marker_path,
+                "Marker not found at path provided in template:", self.marker_path
             )
             exit(31)
 
         marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
-
-        if "sheetToMarkerWidthRatio" in marker_ops:
-            marker = ImageUtils.resize_util(
-                marker,
-                config.dimensions.processing_width
-                / int(marker_ops["sheetToMarkerWidthRatio"]),
-            )
+        sheet_to_marker_ratio = (
+            config.dimensions.processing_width / marker_ops["sheetToMarkerWidthRatio"]
+        )
+        marker = ImageUtils.resize_util(marker, sheet_to_marker_ratio)
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
         marker = cv2.normalize(
             marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
@@ -188,47 +85,112 @@ class CropOnMarkers:
 
         return marker
 
-    # Resizing the marker within scaleRange at rate of descent_per_step to
-    # find the best match.
-    def getBestMatch(self, image_eroded_sub):
-        config = self.tuning_config
+    def _apply_erode_subtract(self, image):
+        if self.apply_erode_subtract:
+            return ImageUtils.normalize_util(image)
+        else:
+            return ImageUtils.normalize_util(
+                image - cv2.erode(image, kernel=np.ones((5, 5)), iterations=5)
+            )
+
+    def _divide_image_into_quadrants(self, image):
+        h, w = image.shape[:2]
+        midh, midw = h // 3, w // 2
+        quads = {
+            0: image[0:midh, 0:midw],
+            1: image[0:midh, midw:w],
+            2: image[midh:h, 0:midw],
+            3: image[midh:h, midw:w],
+        }
+        origins = [[0, 0], [midw, 0], [0, midh], [midw, midh]]
+        return quads, origins
+
+    def _draw_dividers(self, image):
+        h, w = image.shape[:2]
+        midh, midw = h // 3, w // 2
+        image[:, midw : midw + 2] = 255
+        image[midh : midh + 2, :] = 255
+
+    def _get_best_match(self, image):
         descent_per_step = (
             self.marker_rescale_range[1] - self.marker_rescale_range[0]
         ) // self.marker_rescale_steps
-        _h, _w = self.marker.shape[:2]
-        res, best_scale = None, None
-        all_max_t = 0
+        best_scale, all_max_t = None, 0
 
-        for r0 in np.arange(
+        for scale in np.arange(
             self.marker_rescale_range[1],
             self.marker_rescale_range[0],
-            -1 * descent_per_step,
-        ):  # reverse order
-            s = float(r0 * 1 / 100)
+            -descent_per_step,
+        ):
+            s = scale / 100.0
             if s == 0.0:
                 continue
             rescaled_marker = ImageUtils.resize_util_h(
-                self.marker, u_height=int(_h * s)
+                self.marker, u_height=int(self.marker.shape[0] * s)
             )
-            # res is the black image with white dots
-            res = cv2.matchTemplate(
-                image_eroded_sub, rescaled_marker, cv2.TM_CCOEFF_NORMED
-            )
-
+            res = cv2.matchTemplate(image, rescaled_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()
-            if all_max_t < max_t:
-                # print('Scale: '+str(s)+', Circle Match: '+str(round(max_t*100,2))+'%')
+
+            if max_t > all_max_t:
                 best_scale, all_max_t = s, max_t
 
         if all_max_t < self.min_matching_threshold:
             logger.warning(
-                "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
+                "Template matching too low! Consider rechecking preProcessors applied before this."
             )
-            if config.outputs.show_image_level >= 1:
-                InteractionUtils.show("res", res, 1, 0, config=config)
 
         if best_scale is None:
             logger.warning(
-                "No matchings for given scaleRange:", self.marker_rescale_range
+                "No matchings for given scaleRange: %s", self.marker_rescale_range
             )
         return best_scale, all_max_t
+
+    def _find_marker_centres(
+        self, quads, marker, origins, file_path, all_max_t, image_eroded_sub
+    ):
+        centres = []
+        success = True
+        quarter_match_log = "Matching Marker:  "
+
+        for k in range(4):
+            res = cv2.matchTemplate(quads[k], marker, cv2.TM_CCOEFF_NORMED)
+            max_t = res.max()
+            quarter_match_log += f"Quarter{str(k + 1)}: {str(round(max_t, 3))}\t"
+
+            if (
+                max_t < self.min_matching_threshold
+                or abs(all_max_t - max_t) >= self.max_matching_variation
+            ):
+                logger.error(
+                    "%s\nError: No circle found in Quad %d\n\t min_matching_threshold %f\t max_matching_variation %f\t max_t %f\t all_max_t %f",
+                    file_path,
+                    k + 1,
+                    self.min_matching_threshold,
+                    self.max_matching_variation,
+                    max_t,
+                    all_max_t,
+                )
+                success = False
+                break
+
+            pt = np.argwhere(res == max_t)[0]
+            pt = [pt[1], pt[0]]
+            pt[0] += origins[k][0]
+            pt[1] += origins[k][1]
+            centres.append(
+                ([pt[0] + marker.shape[1] // 2, pt[1] + marker.shape[0] // 2], max_t)
+            )
+            self._draw_marker_rectangle(image_eroded_sub, pt, marker.shape)
+
+        logger.info(quarter_match_log)
+        return centres, success
+
+    def _draw_marker_rectangle(self, image, pt, marker_shape):
+        _h, w = marker_shape[:2]
+        image = cv2.rectangle(
+            image,
+            tuple(pt),
+            (pt[0] + w, pt[1] + _h),
+            (50, 50, 50) if self.apply_erode_subtract else (155, 155, 155),
+            4,
+        )

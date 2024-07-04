@@ -1,6 +1,8 @@
 import numpy as np
 
-import constants
+
+GLOBAL_PAGE_THRESHOLD_WHITE = 50
+GLOBAL_PAGE_THRESHOLD_BLACK = 100
 
 
 class ThresholdCalculator:
@@ -34,9 +36,9 @@ class ThresholdCalculator:
         )
 
         global_default_threshold = (
-            constants.GLOBAL_PAGE_THRESHOLD_WHITE
+            GLOBAL_PAGE_THRESHOLD_WHITE
             if PAGE_TYPE_FOR_THRESHOLD == "white"
-            else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+            else GLOBAL_PAGE_THRESHOLD_BLACK
         )
 
         sorted_values = sorted(original_values)

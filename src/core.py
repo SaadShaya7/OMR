@@ -7,6 +7,7 @@ import numpy as np
 from logger import logger
 from processors.aligner import Aligner
 from processors.CropOnMarkers import CropOnMarkers
+from defaults.config import CONFIG_DEFAULTS
 from threshholdCalculator import ThresholdCalculator
 from utils.image import ImageUtils
 
@@ -16,9 +17,9 @@ class ImageInstanceOps:
 
     save_img_list: Any = defaultdict(list)
 
-    def __init__(self,tuning_config):
+    def __init__(self):
         super().__init__()
-        self.tuning_config = tuning_config
+        self.tuning_config = CONFIG_DEFAULTS
 
     def apply_preprocessors(
         self,

@@ -6,7 +6,6 @@ from fractions import Fraction
 from deepmerge import Merger
 
 from defaults import TEMPLATE_DEFAULTS
-from schemas.constants import FIELD_STRING_REGEX_GROUPS
 import logger
 
 
@@ -57,6 +56,7 @@ def parse_fields(key, fields):
         parsed_fields.extend(fields_array)
     return parsed_fields
 
+FIELD_STRING_REGEX_GROUPS = r"([^\.\d]+)(\d+)\.{2,3}(\d+)"
 
 def parse_field_string(field_string):
     if "." in field_string:
