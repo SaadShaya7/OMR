@@ -1,8 +1,6 @@
-import os
 from constants import FIELD_TYPES
 from core import ImageInstanceOps
 from logger import logger
-from processors.manager import PROCESSOR_MANAGER
 from utils.parsing import (
     open_template_with_defaults,
     parse_fields,
@@ -31,31 +29,13 @@ class Template:
             ],
         )
 
-        self.setup_pre_processors()
         self.setup_field_blocks(field_blocks_object)
-
-    def setup_pre_processors(self):
-        # Define the path to the marker image in the constants directory
-        marker_image_path = os.path.join(
-            os.path.dirname(__file__), "constants", "marker_image.jpg"
-        )
-
-        # Directly create an instance of CropOnMarkers with the hardcoded image path
-        ProcessorClass = PROCESSOR_MANAGER.processors["CropOnMarkers"]
-        pre_processor_instance = ProcessorClass(
-            options={
-                "relativePath": marker_image_path,
-                "sheetToMarkerWidthRatio": 21,
-            },
-            relative_dir=os.path.dirname(__file__),
-            image_instance_ops=self.image_instance_ops,
-        )
-        self.pre_processors = [pre_processor_instance]
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
         self.field_blocks = []
         self.all_parsed_labels = set()
+        print(field_blocks_object)
         for block_name, field_block_object in field_blocks_object.items():
             self.parse_and_add_field_block(block_name, field_block_object)
 

@@ -6,6 +6,7 @@ import numpy as np
 
 from logger import logger
 from processors.aligner import Aligner
+from processors.CropOnMarkers import CropOnMarkers
 from threshholdCalculator import ThresholdCalculator
 from utils.image import ImageUtils
 
@@ -15,12 +16,15 @@ class ImageInstanceOps:
 
     save_img_list: Any = defaultdict(list)
 
-    def __init__(self, tuning_config):
+    def __init__(self,tuning_config):
         super().__init__()
         self.tuning_config = tuning_config
-        self.save_image_level = tuning_config.outputs.save_image_level
 
-    def apply_preprocessors(self, file_path, in_omr, template):
+    def apply_preprocessors(
+        self,
+        file_path,
+        in_omr,
+    ):
         tuning_config = self.tuning_config
 
         in_omr = ImageUtils.resize_util(
@@ -29,8 +33,7 @@ class ImageInstanceOps:
             tuning_config.dimensions.processing_height,
         )
 
-        for pre_processor in template.pre_processors:
-            in_omr = pre_processor.apply_filter(in_omr, file_path)
+        in_omr = CropOnMarkers().apply_filter(in_omr, file_path)
         return in_omr
 
     def prepare_image(self, image, template):

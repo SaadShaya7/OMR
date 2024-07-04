@@ -4,7 +4,6 @@ from pyzbar.pyzbar import decode
 
 from defaults import CONFIG_DEFAULTS
 from utils.image import ImageUtils
-from utils.interaction import InteractionUtils
 from template import Template
 
 
@@ -25,9 +24,7 @@ def entry_point(image_path, template_path, sample_id):
     if in_omr is None:
         raise Exception(f"Could not read the provided image")
 
-    in_omr = template.image_instance_ops.apply_preprocessors(
-        image_path, in_omr, template
-    )
+    in_omr = template.image_instance_ops.apply_preprocessors(image_path, in_omr)
 
     if in_omr is None:
         raise Exception(f"Failure after applying processors")
@@ -41,20 +38,6 @@ def entry_point(image_path, template_path, sample_id):
     )
 
     return final_marked, omr_response, cropped_name, multi_marked_count
-
-
-def show_template_layouts(file_path, template, tuning_config):
-    in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-    in_omr = cv2.flip(in_omr, 1)
-    in_omr = template.image_instance_ops.apply_preprocessors(
-        file_path, in_omr, template
-    )
-    template_layout = template.image_instance_ops.draw_template_layout(
-        in_omr, template, shifted=False, border=2
-    )
-    InteractionUtils.show(
-        f"Template Layout", template_layout, 1, 1, config=tuning_config
-    )
 
 
 def read_sample_id(original_image, template) -> str:
@@ -76,5 +59,8 @@ def read_sample_id(original_image, template) -> str:
     data = None if decoded == None else decoded.data.decode("utf-8")
 
     print(data)
+    # cv2.imshow("sdf", cropped)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     return data

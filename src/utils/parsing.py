@@ -1,3 +1,4 @@
+import json
 import re
 from copy import deepcopy
 from fractions import Fraction
@@ -6,11 +7,18 @@ from deepmerge import Merger
 
 from defaults import TEMPLATE_DEFAULTS
 from schemas.constants import FIELD_STRING_REGEX_GROUPS
-from utils.file import load_json
-from utils.validations import (
-    validate_evaluation_json,
-    validate_template_json,
-)
+import logger
+
+
+def load_json(path, **rest):
+    try:
+        with open(path, "r") as f:
+            loaded = json.load(f, **rest)
+    except json.decoder.JSONDecodeError as error:
+        logger.critical(f"Error when loading json file at: '{path}'\n{error}")
+        exit(1)
+    return loaded
+
 
 OVERRIDE_MERGER = Merger(
     # pass in a list of tuples,with the
@@ -32,14 +40,7 @@ OVERRIDE_MERGER = Merger(
 def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
     user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
-    validate_template_json(user_template, template_path)
     return user_template
-
-
-def open_evaluation_with_validation(evaluation_path):
-    user_evaluation_config = load_json(evaluation_path)
-    validate_evaluation_json(user_evaluation_config, evaluation_path)
-    return user_evaluation_config
 
 
 def parse_fields(key, fields):
