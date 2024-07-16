@@ -1,4 +1,3 @@
-
 from logger import logger
 from utils.parsing import (
     open_template_with_defaults,
@@ -17,9 +16,6 @@ FIELD_TYPES = {
         "bubbleValues": [0, 1, 2, 3],
         "direction": "vertical",
     },
-    #
-    # You can create and append custom field types here-
-    #
 }
 
 
@@ -50,7 +46,6 @@ class Template:
         # Add field_blocks
         self.field_blocks = []
         self.all_parsed_labels = set()
-        print(field_blocks_object)
         for block_name, field_block_object in field_blocks_object.items():
             self.parse_and_add_field_block(block_name, field_block_object)
 
@@ -122,7 +117,7 @@ class FieldBlock:
         self.setup_field_block(field_block_object)
 
     def setup_field_block(self, field_block_object):
-        # case mapping
+
         (
             bubble_dimensions,
             bubble_values,

@@ -1,6 +1,3 @@
-from collections import defaultdict
-from typing import Any
-
 import cv2
 import numpy as np
 
@@ -15,17 +12,11 @@ from utils.image import ImageUtils
 class ImageInstanceOps:
     """Class to hold fine-tuned utilities for a group of images. One instance for each processing directory."""
 
-    save_img_list: Any = defaultdict(list)
-
     def __init__(self):
         super().__init__()
         self.tuning_config = CONFIG_DEFAULTS
 
-    def apply_preprocessors(
-        self,
-        file_path,
-        in_omr,
-    ):
+    def apply_preprocessors(self, file_path, in_omr):
         tuning_config = self.tuning_config
 
         in_omr = ImageUtils.resize_util(
@@ -87,10 +78,12 @@ class ImageInstanceOps:
                 omr_threshold_avg += strip_threshold
 
                 detected_bubbles = []
+
                 for bubble in bubble_group:
                     is_bubble_marked = (
                         strip_threshold > all_mean_values[total_box_count]
                     )
+                    # print(f'{question_index} strip threshhold is {strip_threshold}, marked: {is_bubble_marked}')
                     total_box_count += 1
 
                     if is_bubble_marked:
@@ -111,8 +104,14 @@ class ImageInstanceOps:
                     omr_response[field_label] = (
                         None if multi_marked_local else field_value
                     )
-                    if multi_marked_local and field_label not in multi_marked_fields:
-                        multi_marked_fields.append(field_label)
+                    if (
+                        field_block.name != "StudentId" and field_block.name != "form"
+                    ):  # Disregard form and student id from multi answered question count
+                        if (
+                            multi_marked_local
+                            and field_label not in multi_marked_fields
+                        ):
+                            multi_marked_fields.append(field_label)
 
                 if len(detected_bubbles) == 0:
                     field_label = bubble_group[0].field_label

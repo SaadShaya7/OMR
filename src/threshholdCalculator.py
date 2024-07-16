@@ -1,8 +1,9 @@
 import numpy as np
 
 
-GLOBAL_PAGE_THRESHOLD_WHITE = 50
+GLOBAL_PAGE_THRESHOLD_WHITE = 85
 GLOBAL_PAGE_THRESHOLD_BLACK = 100
+ALL_VALUES_SELECTED_THRESHOLD = 150
 
 
 class ThresholdCalculator:
@@ -63,12 +64,19 @@ class ThresholdCalculator:
         It assumes that the background color is uniformly gray or white, but not alternating.
         There are two cases considered: 0 jump and 1 jump.
         """
+
         config = self.tuning_config
         threshold_params = config.threshold_params
 
         q_values = sorted(q_values)
 
-        if len(q_values) < 3:
+        if (
+            max(q_values) < ALL_VALUES_SELECTED_THRESHOLD
+        ):  # Check all options are selected
+            threshold = max(q_values) + 1
+            print(f"ALL VALUES SELECTED GIVING THRESHOLD {threshold}")
+
+        elif len(q_values) < 3:
             threshold = (
                 global_threshold
                 if max(q_values) - min(q_values) < threshold_params.MIN_GAP
@@ -91,4 +99,5 @@ class ThresholdCalculator:
                 if no_outliers:
                     threshold = global_threshold
 
+        # print(f"Q values: {q_values}, decided threshold: {threshold}")
         return threshold
