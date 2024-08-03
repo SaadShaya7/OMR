@@ -105,8 +105,10 @@ class ImageInstanceOps:
                         None if multi_marked_local else field_value
                     )
                     if (
-                        field_block.name != "StudentId" and field_block.name != "form"
-                    ):  # Disregard form and student id from multi answered question count
+                        field_block.name != "StudentId"
+                        and field_block.name != "form"
+                        and field_block.name != "teacher"
+                    ):  # Disregard form, student id and teacher block from multi answered question count
                         if (
                             multi_marked_local
                             and field_label not in multi_marked_fields
